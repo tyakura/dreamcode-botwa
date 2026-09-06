@@ -29,7 +29,7 @@ export const Input = forwardRef<
         id={inputId}
         aria-invalid={error ? true : undefined}
         className={cn(
-          "h-11 w-full rounded-lg border border-line bg-white px-3.5 text-sm text-ink placeholder:text-muted/50 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-accent/50",
+          "h-11 w-full rounded-lg border border-line bg-white px-3.5 text-sm text-ink placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-accent/60",
           error && "border-danger focus:border-danger focus:ring-danger/30",
         )}
         {...props}
@@ -60,7 +60,7 @@ export const Select = forwardRef<
         id={selectId}
         aria-invalid={error ? true : undefined}
         className={cn(
-          "h-11 w-full appearance-none rounded-lg border border-line bg-white px-3.5 text-sm text-ink transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-accent/50",
+          "h-11 w-full appearance-none rounded-lg border border-line bg-white px-3.5 text-sm text-ink transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-accent/60",
           error && "border-danger focus:border-danger focus:ring-danger/30",
         )}
         {...props}
