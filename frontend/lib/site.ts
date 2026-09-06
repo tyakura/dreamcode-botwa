@@ -17,10 +17,4 @@ export const footerNav = {
     { label: "Deal & Follow Up", href: "/features#deal-follow-up" },
     { label: "Integrasi HubSpot", href: "/features#integrations" },
   ],
-  Perusahaan: [
-    { label: "Tentang Kami", href: "/" },
-    { label: "Kontak", href: "/" },
-    { label: "Kebijakan Privasi", href: "/" },
-    { label: "Syarat & Ketentuan", href: "/" },
-  ],
 };
