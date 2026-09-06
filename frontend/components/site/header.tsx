@@ -21,7 +21,7 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-full px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-full px-4 py-2 text-sm font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
             >
               {item.label}
             </Link>
@@ -64,7 +64,7 @@ export function SiteHeader() {
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/85 hover:bg-white/10"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/90 hover:bg-white/10"
             >
               {item.label}
             </Link>

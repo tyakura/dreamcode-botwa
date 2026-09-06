@@ -137,7 +137,7 @@ export default function Home() {
                   ["100%", "Chat terdata"],
                 ].map(([value, label]) => (
                   <div key={label}>
-                    <dt className="order-2 mt-1 block text-xs text-white/60">
+                    <dt className="order-2 mt-1 block text-xs text-white/75">
                       {label}
                     </dt>
                     <dd className="text-2xl font-extrabold text-accent">
@@ -180,7 +180,7 @@ export default function Home() {
                     kirimkan pricelist lengkapnya?
                   </div>
                 </div>
-                <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-white/50">
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-white/75">
                   <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
                   AI mengekstrak data: nama, kebutuhan, produk diminati →
                   status prospek diperbarui
@@ -273,7 +273,7 @@ export default function Home() {
                   </span>
                   <Icon className="mt-3 h-7 w-7 text-accent" />
                   <h3 className="mt-3 text-lg font-bold">{title}</h3>
-                  <p className="mt-2 text-sm text-white/65">{desc}</p>
+                  <p className="mt-2 text-sm text-white/80">{desc}</p>
                 </div>
               ))}
             </div>
@@ -297,7 +297,7 @@ export default function Home() {
                   Siap mengubah chat jadi{" "}
                   <span className="text-accent">pendapatan</span>?
                 </h2>
-                <p className="mt-4 text-lg text-white/70">
+                <p className="mt-4 text-lg text-white/80">
                   Daftar dalam 2 menit, hubungkan WhatsApp, dan biarkan AI mulai
                   bekerja untuk bisnis Anda.
                 </p>

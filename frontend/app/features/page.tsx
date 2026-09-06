@@ -130,7 +130,7 @@ export default function FeaturesPage() {
               Satu platform untuk seluruh{" "}
               <span className="text-accent">perjalanan pelanggan</span>
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-white/70">
+            <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
               Dari pesan WhatsApp pertama hingga deal terkonfirmasi — semuanya
               terotomasi dan terdata dalam satu dasbor.
             </p>
@@ -212,7 +212,7 @@ export default function FeaturesPage() {
             <Button href="/register" variant="primary" size="lg" className="mt-6">
               Daftar Gratis
             </Button>
-            <p className="mt-4 text-sm text-white/60">
+            <p className="mt-4 text-sm text-white/75">
               Lihat juga{" "}
               <Link href="/pricing" className="text-accent underline-offset-4 hover:underline">
                 halaman harga

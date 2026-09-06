@@ -110,7 +110,7 @@ export default function PricingPage() {
               Investasi kecil untuk{" "}
               <span className="text-accent">CS yang tidak pernah tidur</span>
             </h1>
-            <p className="mt-4 text-lg text-white/70">
+            <p className="mt-4 text-lg text-white/80">
               Tidak ada biaya tersembunyi. Tingkatkan paket kapan saja sesuai
               volume percakapan bisnis Anda.
             </p>
@@ -164,7 +164,7 @@ export default function PricingPage() {
                         <span
                           className={cn(
                             "text-sm",
-                            f.included ? "text-muted" : "text-muted/45 line-through",
+                            f.included ? "text-muted" : "text-muted/55 line-through",
                           )}
                         >
                           {f.label}
@@ -205,7 +205,7 @@ export default function PricingPage() {
             <h2 className="text-2xl font-extrabold sm:text-3xl">
               Masih ragu? Coba 14 hari gratis.
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-white/70">
+            <p className="mx-auto mt-3 max-w-xl text-white/80">
               Tanpa kartu kredit, tanpa komitmen. Rasakan bedanya AI menjawab
               pelanggan Anda malam ini.
             </p>

@@ -155,7 +155,7 @@ export default function DocumentationPage() {
             <h1 className="mt-4 text-3xl font-extrabold sm:text-5xl">
               Semua yang perlu Anda ketahui untuk mulai
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-white/70">
+            <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
               Panduan cepat, alur bisnis, model data, dan referensi API —
               dikemas ringkas untuk tim teknis dan non-teknis.
             </p>
@@ -348,7 +348,7 @@ export default function DocumentationPage() {
                 <h3 className="text-lg font-extrabold">
                   Alur inti: chat → data → follow-up → deal
                 </h3>
-                <p className="mt-1 text-sm text-white/65">
+                <p className="mt-1 text-sm text-white/80">
                   Customer WhatsApp → AI Agent → Conversation → Customer dibuat →
                   Intent dianalisis → Follow-up otomatis → Deal dikonfirmasi.
                 </p>

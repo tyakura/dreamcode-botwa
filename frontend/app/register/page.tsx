@@ -81,7 +81,7 @@ export default function RegisterPage() {
               <span
                 className={cn(
                   "text-center text-[11px] font-semibold leading-tight",
-                  active ? "text-primary" : "text-muted/60",
+                  active ? "text-primary" : "text-muted/75",
                 )}
               >
                 {label}

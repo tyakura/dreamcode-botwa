@@ -62,7 +62,7 @@ export default function LoginPage() {
           <button
             type="button"
             aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-            className="absolute right-3.5 top-[38px] text-muted/60 hover:text-ink"
+            className="absolute right-3.5 top-[38px] text-muted/80 hover:text-ink"
             onClick={() => setShowPassword((v) => !v)}
           >
             {showPassword ? (
