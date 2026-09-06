@@ -1,4 +1,4 @@
-# ERD — AI WhatsApp Business Agent + Mini CRM
+# ERD — AI WhatsApp Business Agent + Mini CRM (Backend: NestJS)
 
 Dokumen ini adalah Entity Relationship Diagram (ERD) yang diturunkan dari `blueprint-ai-whatsapp-business-agent.md`, disesuaikan agar mesin dapat benar-benar menjalankan alur berikut:
 
@@ -11,6 +11,8 @@ Dokumen ini adalah Entity Relationship Diagram (ERD) yang diturunkan dari `bluep
 - Ada mekanisme **data terlarang** (sensitif) yang dideteksi, ditindak, dan di-log.
 - User bisa **menandai/menentukan data pilihan** (data terpilih) untuk keperluan prioritas follow-up/export.
 - HubSpot terhubung sebagai integrasi opsional, dengan status sinkronisasi per data.
+
+> Perbedaan dari versi sebelumnya (`erd.md`): dokumen ini menambahkan **Bagian 6** yang memetakan seluruh ERD ke struktur backend **NestJS** secara konkret (module, service, entity/ORM, queue, scheduler), sesuai arahan blueprint §28 yang merekomendasikan **NestJS sebagai backend**.
 
 ---
 
@@ -373,9 +375,186 @@ erDiagram
 
 ---
 
-## 5. Catatan Implementasi
+## 5. Catatan Implementasi Umum
 
 - Semua timestamp disarankan disimpan dalam UTC agar konsisten dengan operasional 24 jam lintas zona waktu.
 - `access_token_encrypted` pada `integrations` wajib dienkripsi (bukan plain text), sesuai §21 Security.
 - Sebaiknya tambahkan index pada kombinasi `business_id + status` di tabel `customers`, `deals`, dan `follow_ups` karena kolom ini paling sering difilter di dashboard maupun saat export.
 - ERD ini masih bisa berkembang di fase lanjutan (mis. tabel `subscriptions`/`billing` bila platform ini nantinya SaaS berbayar), tetapi struktur di atas sudah cukup untuk menjalankan seluruh MVP Phase 1–8 pada blueprint.
+
+---
+
+## 6. Implementasi Backend dengan NestJS
+
+Bagian ini memetakan ERD di atas menjadi struktur project **NestJS** yang siap dikembangkan, sesuai rekomendasi arsitektur di blueprint §28 (`Backend → NestJS`, `Database → MySQL`).
+
+### 6.1 Stack Backend yang Disarankan
+
+| Kebutuhan | Package NestJS |
+|---|---|
+| ORM ke MySQL | `@nestjs/typeorm` + `typeorm` (atau Prisma bila tim lebih familiar) |
+| Autentikasi | `@nestjs/jwt`, `@nestjs/passport`, `passport-jwt`, `bcrypt` |
+| RBAC (role-based access) | Custom `Guard` + `Decorator` (`@Roles()`) berbasis `roles` & `business_members` |
+| Validasi DTO | `class-validator`, `class-transformer` |
+| Scheduler (follow-up otomatis 24/48 jam, 7 hari) | `@nestjs/schedule` (cron job) |
+| Queue/background job (export Excel, kirim WA/Email, sync HubSpot) | `@nestjs/bullmq` + Redis |
+| Webhook WhatsApp | Modul `whatsapp` dengan endpoint publik + verifikasi signature |
+| Export Excel | `exceljs` dijalankan di dalam job `export_jobs` |
+| Email | `@nestjs-modules/mailer` atau provider (SendGrid/SMTP) |
+| Enkripsi token integrasi | `@nestjs/config` + `crypto` (AES) untuk kolom `access_token_encrypted` |
+| Dokumentasi API | `@nestjs/swagger` |
+
+### 6.2 Struktur Folder Modul (mengikuti batas modul di §22 API Blueprint)
+
+```text
+src/
+├── main.ts
+├── app.module.ts
+├── config/
+│   └── database.config.ts
+├── common/
+│   ├── guards/          # JwtAuthGuard, RolesGuard
+│   ├── decorators/      # @Roles(), @CurrentBusiness()
+│   ├── interceptors/    # audit-log.interceptor.ts
+│   └── filters/         # http-exception.filter.ts
+│
+├── modules/
+│   ├── auth/                  # POST /auth/register /login /logout /forgot-password
+│   ├── users/                 # users, roles, business_members
+│   ├── businesses/            # businesses (workspace/tenant)
+│   ├── ai-agents/             # ai_agents, knowledge_base
+│   ├── customers/             # customers, customer_status_history
+│   ├── conversations/         # conversations, messages
+│   ├── whatsapp/              # webhook masuk/keluar WA, koneksi nomor bisnis
+│   ├── deals/                 # deals
+│   ├── follow-ups/            # follow_ups, follow_up_settings
+│   ├── forbidden-data/        # forbidden_rules, forbidden_data_events
+│   ├── integrations/
+│   │   └── hubspot/           # integrations, hubspot_sync_logs
+│   ├── export/                # export_jobs (queue + exceljs)
+│   ├── notifications/         # notifications
+│   ├── audit-logs/            # audit_logs
+│   └── admin/                 # agregasi untuk /admin (overview, monitoring)
+│
+└── database/
+    ├── entities/         # 1 file per tabel ERD (TypeORM Entity)
+    └── migrations/
+```
+
+Setiap folder di `modules/` berisi struktur standar NestJS: `*.module.ts`, `*.controller.ts`, `*.service.ts`, `dto/`, dan `entities/` (atau menunjuk ke `database/entities`).
+
+### 6.3 Pemetaan Tabel ERD → TypeORM Entity
+
+Semua 20 tabel pada Bagian 1 & 2 dipetakan 1:1 menjadi TypeORM Entity di `database/entities/`. Contoh untuk tabel inti:
+
+```typescript
+// database/entities/customer.entity.ts
+import {
+  Entity, PrimaryGeneratedColumn, Column,
+  ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn,
+} from 'typeorm';
+import { Business } from './business.entity';
+import { Conversation } from './conversation.entity';
+import { Deal } from './deal.entity';
+import { FollowUp } from './follow-up.entity';
+import { CustomerStatusHistory } from './customer-status-history.entity';
+
+@Entity('customers')
+export class Customer {
+  @PrimaryGeneratedColumn() id: number;
+
+  @ManyToOne(() => Business, (b) => b.customers)
+  business: Business;
+
+  @Column() name: string;
+  @Column({ nullable: true }) whatsapp: string;
+  @Column({ nullable: true }) email: string;
+  @Column({ nullable: true }) company: string;
+  @Column({ name: 'product_interest', nullable: true }) productInterest: string;
+  @Column({ type: 'text', nullable: true }) needs: string;
+  @Column({ default: 'NEW' }) status: string;
+  @Column({ nullable: true }) source: string;
+  @Column({ name: 'is_selected', default: false }) isSelected: boolean;
+  @Column({ name: 'last_conversation_at', nullable: true }) lastConversationAt: Date;
+  @Column({ name: 'last_contact_at', nullable: true }) lastContactAt: Date;
+
+  @OneToMany(() => Conversation, (c) => c.customer) conversations: Conversation[];
+  @OneToMany(() => Deal, (d) => d.customer) deals: Deal[];
+  @OneToMany(() => FollowUp, (f) => f.customer) followUps: FollowUp[];
+  @OneToMany(() => CustomerStatusHistory, (h) => h.customer) statusHistory: CustomerStatusHistory[];
+
+  @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
+  @UpdateDateColumn({ name: 'updated_at' }) updatedAt: Date;
+}
+```
+
+```typescript
+// database/entities/export-job.entity.ts
+import {
+  Entity, PrimaryGeneratedColumn, Column,
+  ManyToOne, CreateDateColumn,
+} from 'typeorm';
+import { Business } from './business.entity';
+import { User } from './user.entity';
+
+export enum ExportJobStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  DONE = 'DONE',
+  FAILED = 'FAILED',
+}
+
+@Entity('export_jobs')
+export class ExportJob {
+  @PrimaryGeneratedColumn() id: number;
+
+  @ManyToOne(() => Business) business: Business;
+  @ManyToOne(() => User) requestedBy: User;
+
+  @Column({ type: 'json', nullable: true }) filter: Record<string, any>;
+  @Column({ name: 'file_path', nullable: true }) filePath: string;
+  @Column({ type: 'enum', enum: ExportJobStatus, default: ExportJobStatus.PENDING })
+  status: ExportJobStatus;
+
+  @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
+  @Column({ name: 'completed_at', nullable: true }) completedAt: Date;
+}
+```
+
+Entity lain (`Role`, `User`, `Business`, `BusinessMember`, `AiAgent`, `KnowledgeBase`, `Conversation`, `Message`, `Deal`, `FollowUp`, `FollowUpSetting`, `ForbiddenRule`, `ForbiddenDataEvent`, `Integration`, `HubspotSyncLog`, `Notification`, `AuditLog`) mengikuti pola yang sama: kolom persis seperti diagram Mermaid di Bagian 2, relasi `@ManyToOne`/`@OneToMany` sesuai Bagian 4.
+
+### 6.4 Modul yang Berjalan sebagai Background Job (queue & scheduler)
+
+Ini bagian penting supaya sistem benar-benar otomatis, bukan cuma CRUD:
+
+| Proses Otomatis | Mekanisme NestJS | Tabel Terkait |
+|---|---|---|
+| AI membalas chat WA 24 jam | `whatsapp` module terima webhook → `ai-agents` service panggil LLM → simpan ke `messages` | `conversations`, `messages`, `ai_agents` |
+| Deteksi intent "deal" dari chat | Service di `deals` dipanggil dari `conversations` service setelah AI memproses pesan | `deals`, `conversations` |
+| Follow-up otomatis (24 jam/48 jam/7 hari) | `@nestjs/schedule` cron job berjalan tiap jam, cek `customers` yang belum reply sesuai `follow_up_settings`, lalu push job ke queue `follow-up-queue` | `follow_ups`, `follow_up_settings`, `customers` |
+| Kirim WA/Email follow-up | `BullMQ` worker/processor terpisah agar tidak memblokir request utama | `follow_ups` |
+| Export ke Excel | `export` module: endpoint hanya membuat baris `export_jobs` (status `PENDING`), lalu `BullMQ` processor generate file `exceljs` di background dan update `status` → `PROCESSING` → `DONE`/`FAILED` | `export_jobs` |
+| Deteksi data terlarang | `Interceptor`/service di `whatsapp`/`conversations` mengecek isi pesan terhadap `forbidden_rules` sebelum data disimpan/ditampilkan, lalu catat ke `forbidden_data_events` | `forbidden_rules`, `forbidden_data_events` |
+| Sync HubSpot | `integrations/hubspot` module: sync manual via endpoint atau terjadwal via cron, hasilnya dicatat di `hubspot_sync_logs` | `integrations`, `hubspot_sync_logs` |
+| Audit trail | Global `Interceptor` (`audit-log.interceptor.ts`) mencatat setiap create/update/delete penting ke `audit_logs` | `audit_logs` |
+
+### 6.5 RBAC (Role-Based Access Control) di NestJS
+
+- `RolesGuard` custom membaca role user dari JWT payload (hasil join `users.role_id` + `business_members.role_id`), dicocokkan dengan metadata `@Roles('SUPER_ADMIN', 'ADMIN', 'BUSINESS_OWNER', 'STAFF_CS')` di setiap controller/endpoint, sesuai hierarki role di §17.
+- `@CurrentBusiness()` decorator dipakai di hampir semua controller (kecuali `admin`) untuk otomatis membatasi query berdasarkan `business_id` milik user yang login — ini penting karena struktur ERD bersifat multi-tenant (lihat Bagian 4).
+
+### 6.6 Endpoint Mengikuti §22 API Blueprint
+
+Struktur controller NestJS mengikuti persis daftar endpoint di blueprint §22 (`/auth/*`, `/customers/*`, `/conversations/*`, `/deals/*`, `/follow-ups/*`, `/agents/*`, `/integrations/hubspot/*`), ditambah:
+
+```text
+POST /export                → buat export_jobs (status PENDING)
+GET  /export/:id            → cek status export_jobs
+GET  /export/:id/download   → unduh file setelah status DONE
+```
+
+### 6.7 Catatan Tambahan Khusus NestJS
+
+- Gunakan `ConfigModule.forRoot()` dari `@nestjs/config` untuk memisahkan environment (`.env`) — kredensial WhatsApp API, HubSpot, Redis, dan secret JWT tidak boleh hardcode, sejalan dengan §21 Security.
+- Redis wajib disiapkan sebagai broker untuk `BullMQ` (queue export, follow-up, sync HubSpot) agar proses berat tidak menghambat response time webhook WhatsApp.
+- Karena §29 menegaskan *"Jangan menjadikan AI sebagai satu-satunya sumber kebenaran"*, service NestJS untuk `deals` dan `customers` tetap menjalankan validasi/business rule di level backend (bukan hanya mempercayai output AI) sebelum menulis ke database.

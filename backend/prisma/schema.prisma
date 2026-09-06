@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  users     User[]
+  businessMembers BusinessMember[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  roleId       Int
+  role         Role     @relation(fields: [roleId], references: [id])
+  status       String   @default("ACTIVE") // ACTIVE | INACTIVE | SUSPENDED
+  businesses   Business[]      @relation("BusinessOwner")
+  memberships  BusinessMember[]
+  deals        Deal[]          @relation("DealHandler")
+  followUps    FollowUp[]      @relation("FollowUpCreator")
+  exportJobs   ExportJob[]     @relation("ExportRequestedBy")
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Business {
+  id          Int      @id @default(autoincrement())
+  ownerId     Int
+  owner       User     @relation("BusinessOwner", fields: [ownerId], references: [id])
+  name        String
+  description String?
+  status      String   @default("ACTIVE")
+  members     BusinessMember[]
+  aiAgents    AiAgent[]
+  knowledgeBases KnowledgeBase[]
+  customers   Customer[]
+  conversations Conversation[]
+  deals       Deal[]
+  followUps   FollowUp[]
+  followUpSettings FollowUpSetting[]
+  forbiddenRules ForbiddenRule[]
+  forbiddenDataEvents ForbiddenDataEvent[]
+  integrations Integration[]
+  exportJobs  ExportJob[]
+  notifications Notification[]
+  auditLogs   AuditLog[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BusinessMember {
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  roleId     Int
+  role       Role     @relation(fields: [roleId], references: [id])
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+}
+
+model AiAgent {
+  id            Int      @id @default(autoincrement())
+  businessId    Int
+  business      Business @relation(fields: [businessId], references: [id])
+  name          String
+  systemPrompt  String?
+  personality   String?
+  operatingHours String?  // contoh: "24/7" atau "09:00-18:00 WIB"
+  status        String   @default("ACTIVE")
+  knowledgeBases KnowledgeBase[]
+  conversations Conversation[]
+  followUpSettings FollowUpSetting[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model KnowledgeBase {
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  aiAgentId  Int?
+  aiAgent    AiAgent? @relation(fields: [aiAgentId], references: [id])
+  title      String
+  content    String?
+  sourceType String   @default("MANUAL") // FAQ | PRODUCT | DOCUMENT | MANUAL
+  createdAt  DateTime @default(now())
+}
+
+model Customer {
+  id                 Int      @id @default(autoincrement())
+  businessId         Int
+  business           Business @relation(fields: [businessId], references: [id])
+  name               String?
+  whatsapp           String   @unique
+  email              String?
+  company            String?
+  productInterest    String?
+  needs              String?
+  status             String   @default("NEW") // NEW | CONTACTED | INTERESTED | QUALIFIED | NEGOTIATION | DEAL | LOST
+  source             String   @default("WHATSAPP") // WHATSAPP | EMAIL | MANUAL | WEB
+  isSelected         Boolean  @default(false)
+  lastConversationAt DateTime?
+  lastContactAt      DateTime?
+  statusHistory      CustomerStatusHistory[]
+  conversations      Conversation[]
+  deals              Deal[]
+  followUps          FollowUp[]
+  forbiddenDataEvents ForbiddenDataEvent[]
+  hubspotSyncLogs    HubspotSyncLog[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([businessId, status])
+}
+
+model CustomerStatusHistory {
+  id             Int      @id @default(autoincrement())
+  customerId     Int
+  customer       Customer @relation(fields: [customerId], references: [id])
+  previousStatus String?
+  newStatus      String
+  changedBy      String?  // nama user/system
+  changedAt      DateTime @default(now())
+}
+
+model Conversation {
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+  aiAgentId  Int?
+  aiAgent    AiAgent? @relation(fields: [aiAgentId], references: [id])
+  channel    String   @default("WHATSAPP")
+  status     String   @default("OPEN") // OPEN | CLOSED | PENDING
+  assignedTo Int?     // user id saat human handoff
+  messages   Message[]
+  deal       Deal?
+  forbiddenDataEvents ForbiddenDataEvent[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderType     String       // CUSTOMER | AGENT | USER
+  message        String
+  aiGenerated    Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
+
+model Deal {
+  id            Int       @id @default(autoincrement())
+  businessId    Int
+  business      Business  @relation(fields: [businessId], references: [id])
+  customerId    Int
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  conversationId Int?      @unique
+  conversation  Conversation? @relation(fields: [conversationId], references: [id])
+  handledBy     Int?
+  handler       User?     @relation("DealHandler", fields: [handledBy], references: [id])
+  product       String?
+  quantity      Int       @default(1)
+  amount        Float?
+  paymentStatus String    @default("UNPAID") // UNPAID | PARTIAL | PAID
+  status        String    @default("PENDING") // PENDING | CONFIRMED | PAID | COMPLETED | CANCELLED
+  dealDate      DateTime?
+  notes         String?
+  source        String    @default("AUTOMATIC") // AUTOMATIC | MANUAL
+  hubspotSyncLogs HubspotSyncLog[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([businessId, status])
+}
+
+model FollowUp {
+  id          Int      @id @default(autoincrement())
+  businessId  Int
+  business    Business @relation(fields: [businessId], references: [id])
+  customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id])
+  createdBy   Int?
+  creator     User?    @relation("FollowUpCreator", fields: [createdBy], references: [id])
+  type        String   @default("MANUAL") // MANUAL | AUTOMATIC
+  channel     String   @default("WHATSAPP") // WHATSAPP | EMAIL
+  scheduledAt DateTime?
+  message     String?
+  status      String   @default("SCHEDULED") // SCHEDULED | SENT | DELIVERED | REPLIED | FAILED | CANCELLED
+  sentAt      DateTime?
+  repliedAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([businessId, status])
+}
+
+model FollowUpSetting {
+  id            Int      @id @default(autoincrement())
+  businessId    Int
+  business      Business @relation(fields: [businessId], references: [id])
+  aiAgentId     Int?
+  aiAgent       AiAgent? @relation(fields: [aiAgentId], references: [id])
+  maxFollowUp   Int      @default(3)
+  intervalHours Int      @default(24)
+  sendTimeStart String   @default("09:00")
+  sendTimeEnd   String   @default("18:00")
+  sendDays      String   @default("MON,FRI") // MON..SUN, comma separated
+  defaultTemplate String?
+  stopConditions String? // kondisi berhenti follow-up
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ForbiddenRule {
+  id               Int      @id @default(autoincrement())
+  businessId       Int
+  business         Business @relation(fields: [businessId], references: [id])
+  name             String
+  ruleType         String   // KEYWORD | PATTERN | FIELD
+  pattern          String   // regex atau keyword
+  action           String   @default("MASK") // MASK | BLOCK | FLAG
+  active           Boolean  @default(true)
+  retentionPolicy  String?  // misal: "24h", "7d", "30d"
+  forbiddenDataEvents ForbiddenDataEvent[]
+  createdAt        DateTime @default(now())
+}
+
+model ForbiddenDataEvent {
+  id                 Int            @id @default(autoincrement())
+  businessId         Int
+  business           Business       @relation(fields: [businessId], references: [id])
+  forbiddenRuleId    Int
+  forbiddenRule      ForbiddenRule  @relation(fields: [forbiddenRuleId], references: [id])
+  customerId         Int?
+  customer           Customer?      @relation(fields: [customerId], references: [id])
+  conversationId     Int?
+  conversation       Conversation?  @relation(fields: [conversationId], references: [id])
+  detectedValueMasked String        // nilai terdeteksi yang sudah di-mask
+  actionTaken        String         @default("MASK")
+  createdAt          DateTime       @default(now())
+}
+
+model Integration {
+  id                   Int      @id @default(autoincrement())
+  businessId           Int
+  business             Business @relation(fields: [businessId], references: [id])
+  provider             String   @unique // "hubspot", dll
+  accessTokenEncrypted String   // wajib dienkripsi
+  status               String   @default("CONNECTED") // CONNECTED | DISCONNECTED
+  config               String?  // JSON string config tambahan
+  hubspotSyncLogs      HubspotSyncLog[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model HubspotSyncLog {
+  id            Int         @id @default(autoincrement())
+  integrationId Int
+  integration   Integration @relation(fields: [integrationId], references: [id])
+  entityType    String      // CUSTOMER | DEAL
+  entityId      Int
+  syncStatus    String      @default("PENDING") // SYNCED | PENDING | FAILED
+  errorMessage  String?
+  syncedAt      DateTime?
+  customerId    Int?
+  customer      Customer?   @relation(fields: [customerId], references: [id])
+  dealId        Int?
+  deal          Deal?       @relation(fields: [dealId], references: [id])
+}
+
+model ExportJob {
+  id          Int      @id @default(autoincrement())
+  businessId  Int
+  business    Business @relation(fields: [businessId], references: [id])
+  requestedBy Int?
+  requester   User?    @relation("ExportRequestedBy", fields: [requestedBy], references: [id])
+  filter      String?  // JSON filter status/tanggal/produk/sumber
+  filePath    String?
+  status      String   @default("PENDING") // PENDING | PROCESSING | DONE | FAILED
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  userId     Int?
+  user       User?    @relation(fields: [userId], references: [id])
+  type       String   // NEW_CUSTOMER | NEW_DEAL | EXPORT_DONE | FORBIDDEN_DATA | FOLLOW_UP
+  message    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  businessId Int?
+  business   Business? @relation(fields: [businessId], references: [id])
+  userId     Int?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entity     String
+  entityId   Int?
+  metadata   String?  // JSON string
+  createdAt  DateTime @default(now())
+}
