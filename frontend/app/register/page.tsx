@@ -7,6 +7,7 @@ import { AuthShell, AuthAlternate } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Checkbox } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { authApi, setToken, setUser } from "@/lib/api";
 
 const steps = ["Buat Akun", "Verifikasi Email", "Workspace Siap"];
 
@@ -24,7 +25,7 @@ export default function RegisterPage() {
     agree: false,
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (
@@ -42,10 +43,21 @@ export default function RegisterPage() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await authApi.register({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      setToken(res.token);
+      setUser(res.user);
       setStep(2);
-    }, 800);
+    } catch (err: unknown) {
+      const apiErr = err as { message?: string };
+      setError(apiErr.message || "Gagal membuat akun. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -96,12 +108,11 @@ export default function RegisterPage() {
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-success/10 text-success">
             <MailCheck className="h-7 w-7" />
           </span>
-          <h2 className="text-lg font-extrabold text-ink">Cek email Anda</h2>
+          <h2 className="text-lg font-extrabold text-ink">Akun berhasil dibuat!</h2>
           <p className="text-sm text-muted">
-            Kami kirim link verifikasi ke{" "}
-            <span className="font-semibold text-ink">{form.email}</span>. Setelah
-            verifikasi, workspace bisnis Anda otomatis dibuat dan Anda masuk ke
-            dashboard.
+            Selamat datang, <span className="font-semibold text-ink">{form.name}</span>!
+            Akun Anda sudah aktif. Silakan lanjut ke dashboard untuk mulai
+            mengelola bisnis Anda.
           </p>
           <Button
             variant="dark"
@@ -159,7 +170,7 @@ export default function RegisterPage() {
             name="password"
             type="password"
             label="Password"
-            placeholder="Minimal 8 karakter"
+            placeholder="Minimal 6 karakter"
             autoComplete="new-password"
             hint="Gunakan kombinasi huruf dan angka."
             value={form.password}

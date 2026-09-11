@@ -1,0 +1,47 @@
+
+========================================
+  DreamCode BotWA Backend
+  Running on: http://localhost:3001
+  Health:     http://localhost:3001/health
+========================================
+
+[0mGET /health [32m200[0m 4.596 ms - 54[0m
+Error: SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+    at parse (D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\body-parser\lib\types\json.js:96:19)
+    at D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\body-parser\lib\read.js:128:18
+    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
+    at invokeCallback (D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\raw-body\index.js:238:16)
+    at done (D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\raw-body\index.js:227:7)
+    at IncomingMessage.onEnd (D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\raw-body\index.js:287:7)
+    at IncomingMessage.emit (node:events:508:28)
+    at endReadableNT (node:internal/streams/readable:1701:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  expose: true,
+  statusCode: 400,
+  status: 400,
+  body: '{\\',
+  type: 'entity.parse.failed'
+}
+Error: SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+    at parse (D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\body-parser\lib\types\json.js:96:19)
+    at D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\body-parser\lib\read.js:128:18
+    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
+    at invokeCallback (D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\raw-body\index.js:238:16)
+    at done (D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\raw-body\index.js:227:7)
+    at IncomingMessage.onEnd (D:\A__KELAS 11\Semester I__Kelas 11\projek_lomba\dreamcode-botwa\backend\node_modules\raw-body\index.js:287:7)
+    at IncomingMessage.emit (node:events:508:28)
+    at endReadableNT (node:internal/streams/readable:1701:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  expose: true,
+  statusCode: 400,
+  status: 400,
+  body: '{\\',
+  type: 'entity.parse.failed'
+}
+[0mPOST /api/auth/register [32m201[0m 152.932 ms - 316[0m
+[0mPOST /api/auth/register [32m201[0m 103.523 ms - 329[0m
+[0mPOST /api/auth/login [32m200[0m 101.553 ms - 360[0m
+[0mPOST /api/auth/register [32m201[0m 92.904 ms - 338[0m
+[0mPOST /api/auth/login [32m200[0m 83.033 ms - 369[0m

@@ -6,6 +6,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { AuthShell, AuthAlternate } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Checkbox } from "@/components/ui/input";
+import { authApi, setToken, setUser } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ email: "", password: "" });
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!form.email || !form.password) {
@@ -22,10 +23,20 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await authApi.login({
+        email: form.email,
+        password: form.password,
+      });
+      setToken(res.token);
+      setUser(res.user);
       router.push("/dashboard");
-    }, 800);
+    } catch (err: unknown) {
+      const apiErr = err as { message?: string };
+      setError(apiErr.message || "Gagal login. Periksa email dan password Anda.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
