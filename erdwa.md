@@ -1,4 +1,4 @@
-# ERD — AI WhatsApp Business Agent + Mini CRM
+# ERD — AI WhatsApp Business Agent + Mini CRM (Backend: NestJS)
 
 Dokumen ini adalah Entity Relationship Diagram (ERD) yang diturunkan dari `blueprint-ai-whatsapp-business-agent.md`, disesuaikan agar mesin dapat benar-benar menjalankan alur berikut:
 
@@ -11,37 +11,42 @@ Dokumen ini adalah Entity Relationship Diagram (ERD) yang diturunkan dari `bluep
 - Ada mekanisme **data terlarang** (sensitif) yang dideteksi, ditindak, dan di-log.
 - User bisa **menandai/menentukan data pilihan** (data terpilih) untuk keperluan prioritas follow-up/export.
 - HubSpot terhubung sebagai integrasi opsional, dengan status sinkronisasi per data.
+- **(Baru)** User bisa **menghubungkan database eksternal miliknya sendiri**, sistem membaca daftar tabel & kolom di dalamnya, lalu user **menyeleksi tabel dan kolom** mana saja yang mau dipakai/diimpor.
 
-> Perbedaan dari versi sebelumnya (`erd.md`): dokumen ini menambahkan **Bagian 6** yang memetakan seluruh ERD ke struktur backend **NestJS** secara konkret (module, service, entity/ORM, queue, scheduler), sesuai arahan blueprint §28 yang merekomendasikan **NestJS sebagai backend**.
+> Perbedaan dari versi sebelumnya: dokumen ini menambahkan **Bagian 7** — fitur *Database Connector* (baca skema database eksternal user, seleksi tabel & kolom), lengkap dengan tabel ERD baru dan rancangan modul NestJS-nya. Bagian 6 (implementasi backend NestJS umum) tetap dipertahankan.
 
 ---
 
 ## 1. Daftar Entitas
 
-| No | Entitas | Fungsi Utama | Referensi Blueprint |
+| No | Entitas | Fungsi Utama | Referensi |
 |----|---------|---------------|----------------------|
 | 1 | `roles` | Daftar role (Super Admin, Admin, Business Owner, Staff/CS) | §17, §18 |
 | 2 | `users` | Akun login (admin platform maupun tim bisnis) | §5, §18 |
 | 3 | `businesses` | Workspace/tenant bisnis | §18 |
-| 4 | `business_members` | Relasi staff/CS ke satu atau lebih business (pivot) | §17 (tambahan agar role Staff/CS bisa terpasang ke business) |
+| 4 | `business_members` | Relasi staff/CS ke satu atau lebih business (pivot) | §17 (tambahan) |
 | 5 | `ai_agents` | Konfigurasi AI Agent per business | §15, §18 |
 | 6 | `knowledge_base` | Sumber pengetahuan AI (FAQ, produk, harga, dsb) | §15, §18 |
 | 7 | `customers` | Data pelanggan/prospect (Lite Customer) | §8, §18 |
-| 8 | `customer_status_history` | Riwayat perubahan status pelanggan | §8 (tambahan untuk audit funnel status) |
+| 8 | `customer_status_history` | Riwayat perubahan status pelanggan | §8 (tambahan) |
 | 9 | `conversations` | Sesi percakapan WhatsApp per pelanggan | §7, §14, §18 |
 | 10 | `messages` | Isi pesan dalam satu conversation | §7, §18 |
 | 11 | `deals` | Data pelanggan yang sudah deal/beli | §10, §18 |
 | 12 | `follow_ups` | Antrian & riwayat follow-up (manual/otomatis) | §11, §18 |
-| 13 | `follow_up_settings` | Aturan follow-up otomatis per business/agent | §11 (tambahan, menampung field settings di §11) |
+| 13 | `follow_up_settings` | Aturan follow-up otomatis per business/agent | §11 (tambahan) |
 | 14 | `forbidden_rules` | Definisi field/keyword/pattern data terlarang | §12, §18 |
-| 15 | `forbidden_data_events` | Log kejadian saat data terlarang terdeteksi | §12 (tambahan, menampung "Log event" di §12) |
+| 15 | `forbidden_data_events` | Log kejadian saat data terlarang terdeteksi | §12 (tambahan) |
 | 16 | `integrations` | Konfigurasi integrasi eksternal (HubSpot, dsb) | §13, §18 |
-| 17 | `hubspot_sync_logs` | Riwayat sinkronisasi ke HubSpot per entitas | §13 (tambahan untuk status SYNCED/PENDING/FAILED) |
-| 18 | `export_jobs` | Permintaan & status export data ke Excel | §9 (tambahan agar export "memberikan status") |
+| 17 | `hubspot_sync_logs` | Riwayat sinkronisasi ke HubSpot per entitas | §13 (tambahan) |
+| 18 | `export_jobs` | Permintaan & status export data ke Excel | §9 (tambahan) |
 | 19 | `notifications` | Notifikasi dashboard (customer baru, deal, dsb) | §20 |
 | 20 | `audit_logs` | Jejak audit seluruh aksi penting | §18, §21 |
+| 21 | `database_connections` | Kredensial & status koneksi ke database eksternal milik user | **Baru** — fitur Database Connector |
+| 22 | `db_schema_tables` | Daftar tabel hasil pembacaan skema database eksternal + status seleksi | **Baru** |
+| 23 | `db_schema_columns` | Daftar kolom per tabel + status seleksi + mapping ke field internal | **Baru** |
+| 24 | `db_sync_logs` | Log tiap aksi test koneksi / baca skema / import data dari database eksternal | **Baru** |
 
-> Entitas bertanda "(tambahan)" tidak eksplisit digambarkan sebagai tabel di blueprint, tetapi dibutuhkan agar fitur yang diminta (status export, log data terlarang, status sync HubSpot, aturan follow-up) benar-benar bisa berjalan sebagai sistem, bukan cuma konsep.
+> Entitas bertanda "(tambahan)"/"Baru" tidak eksplisit digambarkan sebagai tabel di blueprint awal, tetapi dibutuhkan agar fitur yang diminta benar-benar bisa berjalan sebagai sistem, bukan cuma konsep.
 
 ---
 
@@ -95,6 +100,12 @@ erDiagram
 
     BUSINESSES ||--o{ AUDIT_LOGS : "mencatat"
     USERS ||--o{ AUDIT_LOGS : "melakukan aksi"
+
+    BUSINESSES ||--o{ DATABASE_CONNECTIONS : "memiliki"
+    USERS ||--o{ DATABASE_CONNECTIONS : "membuat"
+    DATABASE_CONNECTIONS ||--o{ DB_SCHEMA_TABLES : "memiliki tabel"
+    DB_SCHEMA_TABLES ||--o{ DB_SCHEMA_COLUMNS : "memiliki kolom"
+    DATABASE_CONNECTIONS ||--o{ DB_SYNC_LOGS : "mencatat aktivitas"
 
     ROLES {
         int id PK
@@ -324,6 +335,56 @@ erDiagram
         text metadata
         datetime created_at
     }
+
+    DATABASE_CONNECTIONS {
+        int id PK
+        int business_id FK
+        int created_by FK
+        string name
+        string db_type
+        string host
+        int port
+        string database_name
+        string username
+        string password_encrypted
+        boolean ssl_enabled
+        string status
+        datetime last_tested_at
+        datetime last_synced_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    DB_SCHEMA_TABLES {
+        int id PK
+        int connection_id FK
+        string table_name
+        string table_label
+        bigint row_count_estimate
+        boolean is_selected
+        datetime synced_at
+    }
+
+    DB_SCHEMA_COLUMNS {
+        int id PK
+        int table_id FK
+        string column_name
+        string data_type
+        boolean is_nullable
+        boolean is_primary_key
+        boolean is_selected
+        string mapped_field
+        datetime synced_at
+    }
+
+    DB_SYNC_LOGS {
+        int id PK
+        int connection_id FK
+        string action
+        string status
+        text message
+        datetime created_at
+    }
 ```
 
 ---
@@ -337,74 +398,77 @@ erDiagram
 
 ### 3.2 Data Pelanggan / Lite (belum deal)
 - Tabel `customers` menyimpan pelanggan sejak status `NEW` sampai `DEAL`.
-- `customer_status_history` mencatat perjalanan status (`NEW → CONTACTED → INTERESTED → QUALIFIED → NEGOTIATION → DEAL`) — ini penyelesaian untuk "masalah utama pabrik" yaitu data prospek yang sering hilang/tidak terlacak.
-- Kolom `is_selected` pada `customers` memenuhi kebutuhan **"bisa menentukan data terpilih"** — user/CS bisa menandai pelanggan prioritas (misalnya untuk difollow-up lebih dulu atau di-export terpisah).
+- `customer_status_history` mencatat perjalanan status (`NEW → CONTACTED → INTERESTED → QUALIFIED → NEGOTIATION → DEAL`).
+- Kolom `is_selected` pada `customers` memenuhi kebutuhan **"bisa menentukan data terpilih"**.
 
 ### 3.3 Export Excel otomatis dengan status
-- `export_jobs` menyimpan permintaan export (filter status/tanggal/produk/sumber sesuai §9), lalu `status` berjalan `PENDING → PROCESSING → DONE/FAILED`, dan `file_path` menyimpan lokasi file hasil.
-- Dengan tabel ini, proses export tidak sekadar "generate file" tapi punya jejak status yang bisa dipantau di dashboard (sesuai permintaan "memberikan status").
+- `export_jobs` menyimpan permintaan export, lalu `status` berjalan `PENDING → PROCESSING → DONE/FAILED`, dan `file_path` menyimpan lokasi file hasil.
 
 ### 3.4 Data Deal otomatis
-- `deals` terhubung ke `customers` dan opsional ke `conversations` (`conversation_id`) sebagai bukti sumber percakapan yang memicu deal.
-- Saat AI mendeteksi indikasi deal, sistem membuat baris baru di `deals` dengan status `PENDING`, lalu bisa dikonfirmasi manusia (`handled_by`) sebelum menjadi `CONFIRMED → PAID → COMPLETED`, sesuai catatan blueprint bahwa deal penting butuh konfirmasi manusia.
+- `deals` terhubung ke `customers` dan opsional ke `conversations` sebagai bukti sumber percakapan yang memicu deal, dengan status `PENDING → CONFIRMED → PAID → COMPLETED`.
 
 ### 3.5 Follow Up (manual & otomatis, WA/Email)
-- `follow_ups` menampung baik follow-up manual (`created_by` diisi user) maupun otomatis (`created_by` null/system), dengan `channel` = WhatsApp atau Email, dan `status` mengikuti alur `SCHEDULED → SENT → DELIVERED → REPLIED/FAILED/CANCELLED`.
-- `follow_up_settings` menyimpan aturan otomatisasi per business/agent: jumlah maksimal follow-up, jeda antar follow-up, jam & hari kirim, template default, dan kondisi berhenti (`stop_conditions`) — sesuai daftar "Safety/Business Rules" di §11.
+- `follow_ups` menampung follow-up manual maupun otomatis, dengan `channel` = WhatsApp/Email dan `status` mengikuti alur `SCHEDULED → SENT → DELIVERED → REPLIED/FAILED/CANCELLED`.
+- `follow_up_settings` menyimpan aturan otomatisasi per business/agent.
 
 ### 3.6 Data Terlarang
-- `forbidden_rules` menyimpan definisi field/keyword/pattern yang tidak boleh diproses (mis. NIK, nomor kartu, password).
-- `forbidden_data_events` mencatat setiap kali AI mendeteksi data tersebut dalam suatu `conversation`, termasuk `action_taken` (mask/block) — inilah "Log event" yang disebut di §12, sekaligus jadi bahan audit kepatuhan privasi.
+- `forbidden_rules` menyimpan definisi field/keyword/pattern terlarang; `forbidden_data_events` mencatat setiap kejadian terdeteksi beserta tindakannya.
 
 ### 3.7 Data Terpilih
-- Selain kolom `is_selected` pada `customers`, mekanisme filter di `export_jobs.filter` dan status di `customer_status_history` juga bisa dipakai untuk menyaring "data terpilih" (misalnya hanya status `QUALIFIED` + `is_selected = true`) sebelum di-export atau di-follow-up.
+- Kolom `is_selected` pada `customers`, plus filter di `export_jobs.filter`, dipakai untuk menyaring data prioritas sebelum di-export/follow-up. Pola "seleksi" yang sama juga dipakai pada fitur baru di Bagian 3.9 (seleksi tabel & kolom database eksternal).
 
 ### 3.8 HubSpot (opsional)
-- `integrations` menyimpan konfigurasi koneksi HubSpot per business (token terenkripsi, status connect/disconnect).
-- `hubspot_sync_logs` mencatat status sinkronisasi per entitas (`customer` atau `deal`) dengan `sync_status` = `SYNCED / PENDING / FAILED`, sesuai §13.
-- Karena integrasi ini opsional, seluruh alur inti (CS, data pelanggan, deal, follow-up) tetap berjalan penuh tanpa bergantung pada `integrations`/`hubspot_sync_logs`.
+- `integrations` + `hubspot_sync_logs` mencatat konfigurasi dan status sinkronisasi (`SYNCED/PENDING/FAILED`) tanpa membuat alur inti bergantung padanya.
+
+### 3.9 Koneksi & Seleksi Database Eksternal (Baru)
+- `database_connections` menyimpan kredensial database milik user (host, port, nama database, username, password terenkripsi, jenis DB) beserta `status` (`TESTING/CONNECTED/FAILED/DISCONNECTED`).
+- Saat koneksi berhasil, sistem membaca metadata skema (`information_schema` untuk MySQL/PostgreSQL) dan menyimpan **setiap tabel** yang ditemukan ke `db_schema_tables`, lengkap dengan estimasi jumlah baris (`row_count_estimate`).
+- Untuk setiap tabel, sistem membaca **seluruh kolomnya** dan menyimpan ke `db_schema_columns` (nama kolom, tipe data, nullable, primary key).
+- User lalu **menyeleksi** tabel mana yang relevan (`db_schema_tables.is_selected`) dan **menyeleksi kolom** mana saja di dalam tabel tersebut (`db_schema_columns.is_selected`) — inilah pemenuhan kebutuhan *"bisa membaca tabel yang berada di database user dan bisa diseleksi tabelnya, begitu juga kolomnya"*.
+- Kolom `mapped_field` pada `db_schema_columns` bersifat opsional: dipakai bila user ingin memetakan kolom terpilih (mis. kolom `nama_pelanggan`) ke field internal CRM (`customers.name`), sehingga data dari database eksternal bisa langsung diimpor menjadi data `customers` tanpa mapping manual berulang.
+- `db_sync_logs` mencatat setiap aksi (`TEST_CONNECTION`, `FETCH_SCHEMA`, `IMPORT_DATA`) beserta status dan pesan error jika gagal — supaya proses baca skema yang bisa berjalan lama (database besar) tetap terlihat progresnya di dashboard, konsisten dengan pola `export_jobs` di §3.3.
 
 ---
 
 ## 4. Relasi Kunci (Ringkasan)
 
-- `businesses` adalah pusat multi-tenant: hampir semua entitas operasional (`customers`, `conversations`, `deals`, `follow_ups`, `forbidden_rules`, `integrations`, `ai_agents`, `export_jobs`) memiliki `business_id`.
-- `customers` adalah pusat data pelanggan: satu customer bisa punya banyak `conversations`, banyak `deals` (jarang, tapi mungkin repeat order), banyak `follow_ups`, dan banyak `customer_status_history`.
-- `conversations` menjadi jembatan antara chat mentah (`messages`) dan hasil bisnis (`deals`, `forbidden_data_events`).
-- `follow_up_settings` dan `forbidden_rules` adalah tabel "aturan" (configuration) yang dipakai sistem untuk mengambil keputusan otomatis, sedangkan `follow_ups` dan `forbidden_data_events` adalah tabel "kejadian" (transaksional) hasil penerapan aturan tersebut.
+- `businesses` adalah pusat multi-tenant: hampir semua entitas operasional memiliki `business_id`, termasuk `database_connections`.
+- `customers` adalah pusat data pelanggan: satu customer bisa punya banyak `conversations`, `deals`, `follow_ups`, `customer_status_history`.
+- `conversations` menjembatani chat mentah (`messages`) dan hasil bisnis (`deals`, `forbidden_data_events`).
+- `follow_up_settings` dan `forbidden_rules` adalah tabel "aturan" (configuration); `follow_ups` dan `forbidden_data_events` adalah tabel "kejadian" (transaksional) hasil penerapan aturan.
+- `database_connections → db_schema_tables → db_schema_columns` membentuk hierarki 3 level (koneksi → tabel → kolom) yang mencerminkan struktur database eksternal user secara nyata; `db_sync_logs` berperan sebagai jejak proses (mirip `export_jobs`) agar user tahu kapan skema terakhir dibaca dan apakah berhasil.
 
 ---
 
 ## 5. Catatan Implementasi Umum
 
-- Semua timestamp disarankan disimpan dalam UTC agar konsisten dengan operasional 24 jam lintas zona waktu.
-- `access_token_encrypted` pada `integrations` wajib dienkripsi (bukan plain text), sesuai §21 Security.
-- Sebaiknya tambahkan index pada kombinasi `business_id + status` di tabel `customers`, `deals`, dan `follow_ups` karena kolom ini paling sering difilter di dashboard maupun saat export.
-- ERD ini masih bisa berkembang di fase lanjutan (mis. tabel `subscriptions`/`billing` bila platform ini nantinya SaaS berbayar), tetapi struktur di atas sudah cukup untuk menjalankan seluruh MVP Phase 1–8 pada blueprint.
+- Semua timestamp disarankan disimpan dalam UTC.
+- `access_token_encrypted` (integrations) dan `password_encrypted` (database_connections) wajib dienkripsi (bukan plain text).
+- Tambahkan index pada kombinasi `business_id + status` di tabel `customers`, `deals`, `follow_ups`, dan `connection_id + is_selected` di `db_schema_tables`/`db_schema_columns` karena kolom ini paling sering difilter di UI seleksi.
+- ERD ini masih bisa berkembang di fase lanjutan (mis. tabel `subscriptions`/`billing`), tetapi struktur di atas sudah cukup untuk menjalankan seluruh MVP.
 
 ---
 
-## 6. Implementasi Backend dengan NestJS
-
-Bagian ini memetakan ERD di atas menjadi struktur project **NestJS** yang siap dikembangkan, sesuai rekomendasi arsitektur di blueprint §28 (`Backend → NestJS`, `Database → MySQL`).
+## 6. Implementasi Backend dengan NestJS (Umum)
 
 ### 6.1 Stack Backend yang Disarankan
 
 | Kebutuhan | Package NestJS |
 |---|---|
-| ORM ke MySQL | `@nestjs/typeorm` + `typeorm` (atau Prisma bila tim lebih familiar) |
+| ORM ke MySQL (database internal aplikasi) | `@nestjs/typeorm` + `typeorm` (atau Prisma) |
 | Autentikasi | `@nestjs/jwt`, `@nestjs/passport`, `passport-jwt`, `bcrypt` |
-| RBAC (role-based access) | Custom `Guard` + `Decorator` (`@Roles()`) berbasis `roles` & `business_members` |
+| RBAC | Custom `Guard` + `Decorator` (`@Roles()`) berbasis `roles` & `business_members` |
 | Validasi DTO | `class-validator`, `class-transformer` |
-| Scheduler (follow-up otomatis 24/48 jam, 7 hari) | `@nestjs/schedule` (cron job) |
-| Queue/background job (export Excel, kirim WA/Email, sync HubSpot) | `@nestjs/bullmq` + Redis |
+| Scheduler (follow-up otomatis) | `@nestjs/schedule` (cron job) |
+| Queue/background job (export, follow-up, sync HubSpot, baca skema DB eksternal) | `@nestjs/bullmq` + Redis |
 | Webhook WhatsApp | Modul `whatsapp` dengan endpoint publik + verifikasi signature |
-| Export Excel | `exceljs` dijalankan di dalam job `export_jobs` |
+| Export Excel | `exceljs` |
 | Email | `@nestjs-modules/mailer` atau provider (SendGrid/SMTP) |
-| Enkripsi token integrasi | `@nestjs/config` + `crypto` (AES) untuk kolom `access_token_encrypted` |
+| Enkripsi kredensial | `@nestjs/config` + `crypto` (AES-256) |
+| Driver database eksternal (dinamis, lihat Bagian 7) | `mysql2`, `pg`, `mssql`, `tedious` (sesuai `db_type` yang didukung) |
 | Dokumentasi API | `@nestjs/swagger` |
 
-### 6.2 Struktur Folder Modul (mengikuti batas modul di §22 API Blueprint)
+### 6.2 Struktur Folder Modul
 
 ```text
 src/
@@ -419,69 +483,161 @@ src/
 │   └── filters/         # http-exception.filter.ts
 │
 ├── modules/
-│   ├── auth/                  # POST /auth/register /login /logout /forgot-password
-│   ├── users/                 # users, roles, business_members
-│   ├── businesses/            # businesses (workspace/tenant)
-│   ├── ai-agents/             # ai_agents, knowledge_base
-│   ├── customers/             # customers, customer_status_history
-│   ├── conversations/         # conversations, messages
-│   ├── whatsapp/              # webhook masuk/keluar WA, koneksi nomor bisnis
-│   ├── deals/                 # deals
-│   ├── follow-ups/            # follow_ups, follow_up_settings
-│   ├── forbidden-data/        # forbidden_rules, forbidden_data_events
+│   ├── auth/
+│   ├── users/
+│   ├── businesses/
+│   ├── ai-agents/
+│   ├── customers/
+│   ├── conversations/
+│   ├── whatsapp/
+│   ├── deals/
+│   ├── follow-ups/
+│   ├── forbidden-data/
 │   ├── integrations/
-│   │   └── hubspot/           # integrations, hubspot_sync_logs
-│   ├── export/                # export_jobs (queue + exceljs)
-│   ├── notifications/         # notifications
-│   ├── audit-logs/            # audit_logs
-│   └── admin/                 # agregasi untuk /admin (overview, monitoring)
+│   │   └── hubspot/
+│   ├── export/
+│   ├── notifications/
+│   ├── audit-logs/
+│   ├── database-connector/    # ← modul baru, lihat Bagian 7
+│   └── admin/
 │
 └── database/
-    ├── entities/         # 1 file per tabel ERD (TypeORM Entity)
+    ├── entities/
     └── migrations/
 ```
 
-Setiap folder di `modules/` berisi struktur standar NestJS: `*.module.ts`, `*.controller.ts`, `*.service.ts`, `dto/`, dan `entities/` (atau menunjuk ke `database/entities`).
+### 6.3–6.7
+*(Sama seperti draft sebelumnya: mapping entity TypeORM, background job table, RBAC, endpoint mengikuti API blueprint, dan catatan environment/Redis. Lihat Bagian 7 untuk detail modul baru.)*
 
-### 6.3 Pemetaan Tabel ERD → TypeORM Entity
+---
 
-Semua 20 tabel pada Bagian 1 & 2 dipetakan 1:1 menjadi TypeORM Entity di `database/entities/`. Contoh untuk tabel inti:
+## 7. Fitur Baru: Database Connector (Baca & Seleksi Tabel/Kolom Database User)
+
+Fitur ini memungkinkan user menghubungkan database miliknya sendiri (MySQL/PostgreSQL/SQL Server, dsb), lalu sistem **membaca metadata skema** (bukan seluruh data) untuk ditampilkan sebagai daftar tabel → daftar kolom yang bisa **diseleksi** satu per satu.
+
+### 7.1 Alur Pengguna (User Flow)
+
+1. **Connect** — User mengisi form koneksi: jenis database, host, port, nama database, username, password (opsional SSL).
+2. **Test Connection** — Backend mencoba konek singkat (timeout pendek) → hasil disimpan ke `database_connections.status` + dicatat di `db_sync_logs` (`action = TEST_CONNECTION`).
+3. **Fetch Schema** — Setelah koneksi berhasil, backend membaca daftar tabel via `information_schema.tables` dan daftar kolom via `information_schema.columns` (read-only, tanpa mengeksekusi query ke data asli) → disimpan ke `db_schema_tables` dan `db_schema_columns`.
+4. **Pilih Tabel** — User melihat daftar tabel di UI (checklist), menandai tabel mana yang relevan → update `db_schema_tables.is_selected`.
+5. **Pilih Kolom** — Untuk setiap tabel terpilih, user melihat daftar kolomnya dan menandai kolom mana yang mau dipakai → update `db_schema_columns.is_selected`.
+6. **(Opsional) Mapping & Import** — User memetakan kolom terpilih ke field CRM (`name`, `whatsapp`, `email`, dst) lalu memicu job import; hasilnya jadi baris baru di `customers` (mengikuti pola `export_jobs`/`import_jobs` dengan status `PENDING → PROCESSING → DONE/FAILED`, dicatat di `db_sync_logs` dengan `action = IMPORT_DATA`).
+
+### 7.2 Modul NestJS: `database-connector`
+
+```text
+modules/database-connector/
+├── database-connector.module.ts
+├── database-connector.controller.ts
+├── database-connector.service.ts
+├── dto/
+│   ├── create-connection.dto.ts
+│   ├── select-tables.dto.ts
+│   ├── select-columns.dto.ts
+│   └── import-data.dto.ts
+├── drivers/
+│   ├── driver.factory.ts        # pilih driver sesuai db_type
+│   ├── mysql.introspector.ts
+│   ├── postgres.introspector.ts
+│   └── mssql.introspector.ts
+└── processors/
+    ├── fetch-schema.processor.ts   # BullMQ job: baca tabel & kolom
+    └── import-data.processor.ts    # BullMQ job: import data terpilih
+```
+
+### 7.3 Endpoint API
+
+```text
+POST   /database-connections                 → simpan kredensial (password langsung dienkripsi)
+POST   /database-connections/:id/test         → test koneksi, update status
+POST   /database-connections/:id/fetch-schema → trigger job baca skema (queue)
+GET    /database-connections/:id/tables       → daftar tabel hasil baca skema
+PATCH  /database-connections/:id/tables       → update seleksi tabel (bulk: array {id, is_selected})
+GET    /database-connections/:id/tables/:tableId/columns  → daftar kolom suatu tabel
+PATCH  /database-connections/:id/tables/:tableId/columns  → update seleksi kolom (bulk)
+POST   /database-connections/:id/import       → trigger job import data dari tabel/kolom terpilih
+GET    /database-connections/:id/logs         → riwayat aktivitas (db_sync_logs)
+DELETE /database-connections/:id              → hapus koneksi (+ cascade tabel/kolom terkait)
+```
+
+### 7.4 Contoh Introspeksi Skema (MySQL, read-only)
 
 ```typescript
-// database/entities/customer.entity.ts
+// modules/database-connector/drivers/mysql.introspector.ts
+import { createConnection } from 'mysql2/promise';
+
+export async function introspectMysqlSchema(config: {
+  host: string; port: number; user: string; password: string; database: string;
+}) {
+  const conn = await createConnection({ ...config, connectTimeout: 5000 });
+
+  try {
+    const [tables] = await conn.query(
+      `SELECT TABLE_NAME, TABLE_ROWS
+       FROM information_schema.tables
+       WHERE TABLE_SCHEMA = ?`,
+      [config.database],
+    );
+
+    const [columns] = await conn.query(
+      `SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_KEY
+       FROM information_schema.columns
+       WHERE TABLE_SCHEMA = ?`,
+      [config.database],
+    );
+
+    return { tables, columns };
+  } finally {
+    await conn.end(); // koneksi selalu ditutup setelah introspeksi, tidak dibiarkan menggantung
+  }
+}
+```
+
+`driver.factory.ts` memilih introspector yang sesuai berdasarkan `database_connections.db_type` (`mysql`, `postgres`, `mssql`, dst), sehingga service utama tidak perlu tahu detail tiap driver.
+
+### 7.5 TypeORM Entity Baru
+
+```typescript
+// database/entities/database-connection.entity.ts
 import {
   Entity, PrimaryGeneratedColumn, Column,
   ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn,
 } from 'typeorm';
 import { Business } from './business.entity';
-import { Conversation } from './conversation.entity';
-import { Deal } from './deal.entity';
-import { FollowUp } from './follow-up.entity';
-import { CustomerStatusHistory } from './customer-status-history.entity';
+import { User } from './user.entity';
+import { DbSchemaTable } from './db-schema-table.entity';
 
-@Entity('customers')
-export class Customer {
+export enum DbConnectionStatus {
+  TESTING = 'TESTING',
+  CONNECTED = 'CONNECTED',
+  FAILED = 'FAILED',
+  DISCONNECTED = 'DISCONNECTED',
+}
+
+@Entity('database_connections')
+export class DatabaseConnection {
   @PrimaryGeneratedColumn() id: number;
 
-  @ManyToOne(() => Business, (b) => b.customers)
-  business: Business;
+  @ManyToOne(() => Business) business: Business;
+  @ManyToOne(() => User) createdBy: User;
 
   @Column() name: string;
-  @Column({ nullable: true }) whatsapp: string;
-  @Column({ nullable: true }) email: string;
-  @Column({ nullable: true }) company: string;
-  @Column({ name: 'product_interest', nullable: true }) productInterest: string;
-  @Column({ type: 'text', nullable: true }) needs: string;
-  @Column({ default: 'NEW' }) status: string;
-  @Column({ nullable: true }) source: string;
-  @Column({ name: 'is_selected', default: false }) isSelected: boolean;
-  @Column({ name: 'last_conversation_at', nullable: true }) lastConversationAt: Date;
-  @Column({ name: 'last_contact_at', nullable: true }) lastContactAt: Date;
+  @Column({ name: 'db_type' }) dbType: string; // mysql | postgres | mssql
+  @Column() host: string;
+  @Column() port: number;
+  @Column({ name: 'database_name' }) databaseName: string;
+  @Column() username: string;
+  @Column({ name: 'password_encrypted' }) passwordEncrypted: string;
+  @Column({ name: 'ssl_enabled', default: false }) sslEnabled: boolean;
 
-  @OneToMany(() => Conversation, (c) => c.customer) conversations: Conversation[];
-  @OneToMany(() => Deal, (d) => d.customer) deals: Deal[];
-  @OneToMany(() => FollowUp, (f) => f.customer) followUps: FollowUp[];
-  @OneToMany(() => CustomerStatusHistory, (h) => h.customer) statusHistory: CustomerStatusHistory[];
+  @Column({ type: 'enum', enum: DbConnectionStatus, default: DbConnectionStatus.TESTING })
+  status: DbConnectionStatus;
+
+  @Column({ name: 'last_tested_at', nullable: true }) lastTestedAt: Date;
+  @Column({ name: 'last_synced_at', nullable: true }) lastSyncedAt: Date;
+
+  @OneToMany(() => DbSchemaTable, (t) => t.connection) tables: DbSchemaTable[];
 
   @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updatedAt: Date;
@@ -489,72 +645,59 @@ export class Customer {
 ```
 
 ```typescript
-// database/entities/export-job.entity.ts
+// database/entities/db-schema-table.entity.ts
 import {
   Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, CreateDateColumn,
+  ManyToOne, OneToMany,
 } from 'typeorm';
-import { Business } from './business.entity';
-import { User } from './user.entity';
+import { DatabaseConnection } from './database-connection.entity';
+import { DbSchemaColumn } from './db-schema-column.entity';
 
-export enum ExportJobStatus {
-  PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING',
-  DONE = 'DONE',
-  FAILED = 'FAILED',
-}
-
-@Entity('export_jobs')
-export class ExportJob {
+@Entity('db_schema_tables')
+export class DbSchemaTable {
   @PrimaryGeneratedColumn() id: number;
 
-  @ManyToOne(() => Business) business: Business;
-  @ManyToOne(() => User) requestedBy: User;
+  @ManyToOne(() => DatabaseConnection, (c) => c.tables)
+  connection: DatabaseConnection;
 
-  @Column({ type: 'json', nullable: true }) filter: Record<string, any>;
-  @Column({ name: 'file_path', nullable: true }) filePath: string;
-  @Column({ type: 'enum', enum: ExportJobStatus, default: ExportJobStatus.PENDING })
-  status: ExportJobStatus;
+  @Column({ name: 'table_name' }) tableName: string;
+  @Column({ name: 'table_label', nullable: true }) tableLabel: string;
+  @Column({ name: 'row_count_estimate', type: 'bigint', nullable: true })
+  rowCountEstimate: number;
+  @Column({ name: 'is_selected', default: false }) isSelected: boolean;
+  @Column({ name: 'synced_at' }) syncedAt: Date;
 
-  @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
-  @Column({ name: 'completed_at', nullable: true }) completedAt: Date;
+  @OneToMany(() => DbSchemaColumn, (c) => c.table) columns: DbSchemaColumn[];
 }
 ```
 
-Entity lain (`Role`, `User`, `Business`, `BusinessMember`, `AiAgent`, `KnowledgeBase`, `Conversation`, `Message`, `Deal`, `FollowUp`, `FollowUpSetting`, `ForbiddenRule`, `ForbiddenDataEvent`, `Integration`, `HubspotSyncLog`, `Notification`, `AuditLog`) mengikuti pola yang sama: kolom persis seperti diagram Mermaid di Bagian 2, relasi `@ManyToOne`/`@OneToMany` sesuai Bagian 4.
+```typescript
+// database/entities/db-schema-column.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { DbSchemaTable } from './db-schema-table.entity';
 
-### 6.4 Modul yang Berjalan sebagai Background Job (queue & scheduler)
+@Entity('db_schema_columns')
+export class DbSchemaColumn {
+  @PrimaryGeneratedColumn() id: number;
 
-Ini bagian penting supaya sistem benar-benar otomatis, bukan cuma CRUD:
+  @ManyToOne(() => DbSchemaTable, (t) => t.columns)
+  table: DbSchemaTable;
 
-| Proses Otomatis | Mekanisme NestJS | Tabel Terkait |
-|---|---|---|
-| AI membalas chat WA 24 jam | `whatsapp` module terima webhook → `ai-agents` service panggil LLM → simpan ke `messages` | `conversations`, `messages`, `ai_agents` |
-| Deteksi intent "deal" dari chat | Service di `deals` dipanggil dari `conversations` service setelah AI memproses pesan | `deals`, `conversations` |
-| Follow-up otomatis (24 jam/48 jam/7 hari) | `@nestjs/schedule` cron job berjalan tiap jam, cek `customers` yang belum reply sesuai `follow_up_settings`, lalu push job ke queue `follow-up-queue` | `follow_ups`, `follow_up_settings`, `customers` |
-| Kirim WA/Email follow-up | `BullMQ` worker/processor terpisah agar tidak memblokir request utama | `follow_ups` |
-| Export ke Excel | `export` module: endpoint hanya membuat baris `export_jobs` (status `PENDING`), lalu `BullMQ` processor generate file `exceljs` di background dan update `status` → `PROCESSING` → `DONE`/`FAILED` | `export_jobs` |
-| Deteksi data terlarang | `Interceptor`/service di `whatsapp`/`conversations` mengecek isi pesan terhadap `forbidden_rules` sebelum data disimpan/ditampilkan, lalu catat ke `forbidden_data_events` | `forbidden_rules`, `forbidden_data_events` |
-| Sync HubSpot | `integrations/hubspot` module: sync manual via endpoint atau terjadwal via cron, hasilnya dicatat di `hubspot_sync_logs` | `integrations`, `hubspot_sync_logs` |
-| Audit trail | Global `Interceptor` (`audit-log.interceptor.ts`) mencatat setiap create/update/delete penting ke `audit_logs` | `audit_logs` |
-
-### 6.5 RBAC (Role-Based Access Control) di NestJS
-
-- `RolesGuard` custom membaca role user dari JWT payload (hasil join `users.role_id` + `business_members.role_id`), dicocokkan dengan metadata `@Roles('SUPER_ADMIN', 'ADMIN', 'BUSINESS_OWNER', 'STAFF_CS')` di setiap controller/endpoint, sesuai hierarki role di §17.
-- `@CurrentBusiness()` decorator dipakai di hampir semua controller (kecuali `admin`) untuk otomatis membatasi query berdasarkan `business_id` milik user yang login — ini penting karena struktur ERD bersifat multi-tenant (lihat Bagian 4).
-
-### 6.6 Endpoint Mengikuti §22 API Blueprint
-
-Struktur controller NestJS mengikuti persis daftar endpoint di blueprint §22 (`/auth/*`, `/customers/*`, `/conversations/*`, `/deals/*`, `/follow-ups/*`, `/agents/*`, `/integrations/hubspot/*`), ditambah:
-
-```text
-POST /export                → buat export_jobs (status PENDING)
-GET  /export/:id            → cek status export_jobs
-GET  /export/:id/download   → unduh file setelah status DONE
+  @Column({ name: 'column_name' }) columnName: string;
+  @Column({ name: 'data_type' }) dataType: string;
+  @Column({ name: 'is_nullable', default: true }) isNullable: boolean;
+  @Column({ name: 'is_primary_key', default: false }) isPrimaryKey: boolean;
+  @Column({ name: 'is_selected', default: false }) isSelected: boolean;
+  @Column({ name: 'mapped_field', nullable: true }) mappedField: string; // mis. 'customers.name'
+  @Column({ name: 'synced_at' }) syncedAt: Date;
+}
 ```
 
-### 6.7 Catatan Tambahan Khusus NestJS
+### 7.6 Catatan Keamanan Khusus Fitur Ini (penting)
 
-- Gunakan `ConfigModule.forRoot()` dari `@nestjs/config` untuk memisahkan environment (`.env`) — kredensial WhatsApp API, HubSpot, Redis, dan secret JWT tidak boleh hardcode, sejalan dengan §21 Security.
-- Redis wajib disiapkan sebagai broker untuk `BullMQ` (queue export, follow-up, sync HubSpot) agar proses berat tidak menghambat response time webhook WhatsApp.
-- Karena §29 menegaskan *"Jangan menjadikan AI sebagai satu-satunya sumber kebenaran"*, service NestJS untuk `deals` dan `customers` tetap menjalankan validasi/business rule di level backend (bukan hanya mempercayai output AI) sebelum menulis ke database.
+- **Gunakan akun database read-only.** Sarankan ke user agar membuat user database khusus dengan hak akses `SELECT` saja (idealnya hanya ke `information_schema` + tabel yang mau dibaca), bukan akun admin/root.
+- **Password selalu dienkripsi** (AES-256) sebelum disimpan ke `database_connections.password_encrypted`, dan hanya didekripsi sesaat di memory saat proses koneksi berjalan.
+- **Batasi waktu koneksi** (`connectTimeout`) dan **selalu tutup koneksi** (`conn.end()`) setelah proses introspeksi/import selesai, agar tidak ada koneksi menggantung ke database user.
+- **Jangan pernah membangun query dari input bebas.** Nama tabel/kolom yang dipilih user untuk proses import harus divalidasi terhadap daftar yang sudah tersimpan di `db_schema_tables`/`db_schema_columns` (bukan string mentah dari request), untuk mencegah SQL injection.
+- **Proses baca skema & import dijalankan sebagai background job** (`BullMQ`) via `fetch-schema.processor.ts` / `import-data.processor.ts`, bukan langsung di request HTTP, karena database user bisa besar dan lambat direspons.
+- **Audit trail** — setiap test koneksi, fetch schema, dan import data dicatat di `db_sync_logs` dan juga `audit_logs`, sesuai prinsip keamanan di §21 blueprint awal.
