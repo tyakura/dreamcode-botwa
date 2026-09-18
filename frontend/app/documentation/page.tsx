@@ -152,10 +152,10 @@ export default function DocumentationPage() {
             <Badge tone="accent" className="bg-accent/15 text-accent">
               Dokumentasi
             </Badge>
-            <h1 className="mt-4 text-3xl font-extrabold sm:text-5xl">
+            <h1 className="mt-4 text-3xl text-white font-extrabold sm:text-5xl">
               Semua yang perlu Anda ketahui untuk mulai
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
+            <p className="mx-auto mt-4 max-w-xl text-lg font-medium text-white">
               Panduan cepat, alur bisnis, model data, dan referensi API —
               dikemas ringkas untuk tim teknis dan non-teknis.
             </p>
@@ -345,10 +345,10 @@ export default function DocumentationPage() {
             </div>
             <div className="mx-auto mt-10 flex max-w-4xl flex-col items-center justify-between gap-4 rounded-2xl bg-primary p-6 text-white sm:flex-row">
               <div>
-                <h3 className="text-lg font-extrabold">
+                <h3 className="text-lg text-white font-extrabold">
                   Alur inti: chat → data → follow-up → deal
                 </h3>
-                <p className="mt-1 text-sm text-white/80">
+                <p className="mt-1 text-sm text-white/90">
                   Customer WhatsApp → AI Agent → Conversation → Customer dibuat →
                   Intent dianalisis → Follow-up otomatis → Deal dikonfirmasi.
                 </p>
@@ -363,7 +363,7 @@ export default function DocumentationPage() {
 
         <section className="bg-primary py-14 text-center text-white">
           <div className="container-x">
-            <h2 className="text-2xl font-extrabold sm:text-3xl">
+            <h2 className="text-2xl text-white font-extrabold sm:text-3xl">
               Siap mencobanya?
             </h2>
             <Button href="/register" variant="primary" size="lg" className="mt-5">

@@ -106,11 +106,11 @@ export default function PricingPage() {
             <Badge tone="accent" className="bg-accent/15 text-accent">
               Harga Sederhana
             </Badge>
-            <h1 className="mt-4 text-3xl font-extrabold sm:text-5xl">
+            <h1 className="mt-4 text-3xl text-white font-extrabold sm:text-5xl">
               Investasi kecil untuk{" "}
               <span className="text-accent">CS yang tidak pernah tidur</span>
             </h1>
-            <p className="mt-4 text-lg text-white/80">
+            <p className="mt-4 text-lg font-medium text-white">
               Tidak ada biaya tersembunyi. Tingkatkan paket kapan saja sesuai
               volume percakapan bisnis Anda.
             </p>
@@ -202,10 +202,10 @@ export default function PricingPage() {
 
         <section className="bg-primary py-16 text-center text-white">
           <div className="container-x">
-            <h2 className="text-2xl font-extrabold sm:text-3xl">
+            <h2 className="text-2xl text-white font-extrabold sm:text-3xl">
               Masih ragu? Coba 14 hari gratis.
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-white/80">
+            <p className="mx-auto mt-3 max-w-xl text-white/90">
               Tanpa kartu kredit, tanpa komitmen. Rasakan bedanya AI menjawab
               pelanggan Anda malam ini.
             </p>

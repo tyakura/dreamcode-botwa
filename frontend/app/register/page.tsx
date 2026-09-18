@@ -7,12 +7,14 @@ import { AuthShell, AuthAlternate } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Checkbox } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { authApi, setToken, setUser } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { homePathFor, RequireGuest } from "@/components/auth/guards";
 
 const steps = ["Buat Akun", "Verifikasi Email", "Workspace Siap"];
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -32,10 +34,9 @@ export default function RegisterPage() {
       !form.name ||
       !form.business ||
       !form.email ||
-      !form.whatsapp ||
       !form.password
     ) {
-      setError("Semua kolom wajib diisi.");
+      setError("Semua kolom wajib diisi (kecuali WhatsApp).");
       return;
     }
     if (!form.agree) {
@@ -44,13 +45,15 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const res = await authApi.register({
+      const res = await register({
         name: form.name,
         email: form.email,
         password: form.password,
+        businessName: form.business,
       });
-      setToken(res.token);
-      setUser(res.user);
+      // BUSINESS_OWNER selalu ke /dashboard, admin ke /admin
+      const dest = homePathFor(res.user.role);
+      sessionStorage.setItem("register_dest", dest);
       setStep(2);
     } catch (err: unknown) {
       const apiErr = err as { message?: string };
@@ -61,13 +64,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell
-      title="Daftar akun baru"
-      subtitle="Gratis 14 hari. Tanpa kartu kredit."
-      footer={
-        <AuthAlternate label="Sudah punya akun? Masuk" href="/login" />
-      }
-    >
+    <RequireGuest>
+      <AuthShell
+        title="Daftar akun baru"
+        subtitle="Gratis 14 hari. Tanpa kartu kredit."
+        footer={
+          <AuthAlternate label="Sudah punya akun? Masuk" href="/login" />
+        }
+      >
       <ol className="mb-6 flex items-center gap-2">
         {steps.map((label, i) => {
           const n = i + 1;
@@ -118,7 +122,11 @@ export default function RegisterPage() {
             variant="dark"
             size="md"
             className="mt-2"
-            onClick={() => router.push("/dashboard")}
+            onClick={() => {
+              const dest = sessionStorage.getItem("register_dest") || "/dashboard/user";
+              sessionStorage.removeItem("register_dest");
+              router.push(dest);
+            }}
           >
             Lanjut ke Dashboard
           </Button>
@@ -194,6 +202,7 @@ export default function RegisterPage() {
           </Button>
         </form>
       )}
-    </AuthShell>
+      </AuthShell>
+      </RequireGuest>
   );
 }

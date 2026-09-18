@@ -6,10 +6,12 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { AuthShell, AuthAlternate } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Checkbox } from "@/components/ui/input";
-import { authApi, setToken, setUser } from "@/lib/api";
+import { homePathFor, RequireGuest } from "@/components/auth/guards";
+import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,13 +26,12 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      const res = await authApi.login({
+      const res = await login({
         email: form.email,
         password: form.password,
       });
-      setToken(res.token);
-      setUser(res.user);
-      router.push("/dashboard");
+      // SUPER_ADMIN / ADMIN → /admin, semua lain (BUSINESS_OWNER, STAFF_CS) → /dashboard
+      router.push(homePathFor(res.user.role));
     } catch (err: unknown) {
       const apiErr = err as { message?: string };
       setError(apiErr.message || "Gagal login. Periksa email dan password Anda.");
@@ -40,11 +41,12 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthShell
-      title="Masuk ke akun Anda"
-      subtitle="Lanjutkan mengelola bisnis dan AI Agent Anda."
-      footer={<AuthAlternate label="Belum punya akun? Daftar" href="/register" />}
-    >
+    <RequireGuest>
+      <AuthShell
+        title="Masuk ke akun Anda"
+        subtitle="Lanjutkan mengelola bisnis dan AI Agent Anda."
+        footer={<AuthAlternate label="Belum punya akun? Daftar" href="/register" />}
+      >
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         {error ? (
           <p className="rounded-lg border border-danger/30 bg-danger/10 px-3.5 py-2.5 text-sm font-medium text-danger">
@@ -103,6 +105,7 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
-    </AuthShell>
+      </AuthShell>
+      </RequireGuest>
   );
 }

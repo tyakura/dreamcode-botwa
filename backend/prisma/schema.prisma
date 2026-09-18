@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -77,8 +77,8 @@ model AiAgent {
   businessId    Int
   business      Business @relation(fields: [businessId], references: [id])
   name          String
-  systemPrompt  String?
-  personality   String?
+  systemPrompt  String?   @db.Text
+  personality   String?   @db.Text
   operatingHours String?  // contoh: "24/7" atau "09:00-18:00 WIB"
   status        String   @default("ACTIVE")
   knowledgeBases KnowledgeBase[]
@@ -94,8 +94,8 @@ model KnowledgeBase {
   business   Business @relation(fields: [businessId], references: [id])
   aiAgentId  Int?
   aiAgent    AiAgent? @relation(fields: [aiAgentId], references: [id])
-  title      String
-  content    String?
+title      String
+  content    String?  @db.Text
   sourceType String   @default("MANUAL") // FAQ | PRODUCT | DOCUMENT | MANUAL
   createdAt  DateTime @default(now())
 }
@@ -108,8 +108,8 @@ model Customer {
   whatsapp           String   @unique
   email              String?
   company            String?
-  productInterest    String?
-  needs              String?
+productInterest    String?
+  needs              String?  @db.Text
   status             String   @default("NEW") // NEW | CONTACTED | INTERESTED | QUALIFIED | NEGOTIATION | DEAL | LOST
   source             String   @default("WHATSAPP") // WHATSAPP | EMAIL | MANUAL | WEB
   isSelected         Boolean  @default(false)
@@ -159,8 +159,8 @@ model Message {
   id             Int          @id @default(autoincrement())
   conversationId Int
   conversation   Conversation @relation(fields: [conversationId], references: [id])
-  senderType     String       // CUSTOMER | AGENT | USER
-  message        String
+senderType     String       // CUSTOMER | AGENT | USER
+  message        String       @db.Text
   aiGenerated    Boolean      @default(false)
   createdAt      DateTime     @default(now())
 }
@@ -180,8 +180,8 @@ model Deal {
   amount        Float?
   paymentStatus String    @default("UNPAID") // UNPAID | PARTIAL | PAID
   status        String    @default("PENDING") // PENDING | CONFIRMED | PAID | COMPLETED | CANCELLED
-  dealDate      DateTime?
-  notes         String?
+dealDate      DateTime?
+  notes         String?  @db.Text
   source        String    @default("AUTOMATIC") // AUTOMATIC | MANUAL
   hubspotSyncLogs HubspotSyncLog[]
   createdAt     DateTime  @default(now())
@@ -200,8 +200,8 @@ model FollowUp {
   creator     User?    @relation("FollowUpCreator", fields: [createdBy], references: [id])
   type        String   @default("MANUAL") // MANUAL | AUTOMATIC
   channel     String   @default("WHATSAPP") // WHATSAPP | EMAIL
-  scheduledAt DateTime?
-  message     String?
+scheduledAt DateTime?
+  message     String?  @db.Text
   status      String   @default("SCHEDULED") // SCHEDULED | SENT | DELIVERED | REPLIED | FAILED | CANCELLED
   sentAt      DateTime?
   repliedAt   DateTime?
@@ -221,8 +221,8 @@ model FollowUpSetting {
   sendTimeStart String   @default("09:00")
   sendTimeEnd   String   @default("18:00")
   sendDays      String   @default("MON,FRI") // MON..SUN, comma separated
-  defaultTemplate String?
-  stopConditions String? // kondisi berhenti follow-up
+  defaultTemplate String?  @db.Text
+  stopConditions String? @db.Text // kondisi berhenti follow-up
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -251,7 +251,7 @@ model ForbiddenDataEvent {
   customer           Customer?      @relation(fields: [customerId], references: [id])
   conversationId     Int?
   conversation       Conversation?  @relation(fields: [conversationId], references: [id])
-  detectedValueMasked String        // nilai terdeteksi yang sudah di-mask
+  detectedValueMasked String  @db.Text        // nilai terdeteksi yang sudah di-mask
   actionTaken        String         @default("MASK")
   createdAt          DateTime       @default(now())
 }
@@ -261,9 +261,9 @@ model Integration {
   businessId           Int
   business             Business @relation(fields: [businessId], references: [id])
   provider             String   @unique // "hubspot", dll
-  accessTokenEncrypted String   // wajib dienkripsi
+  accessTokenEncrypted String  @db.Text   // wajib dienkripsi
   status               String   @default("CONNECTED") // CONNECTED | DISCONNECTED
-  config               String?  // JSON string config tambahan
+  config               String?  @db.Text  // JSON string config tambahan
   hubspotSyncLogs      HubspotSyncLog[]
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -273,10 +273,10 @@ model HubspotSyncLog {
   id            Int         @id @default(autoincrement())
   integrationId Int
   integration   Integration @relation(fields: [integrationId], references: [id])
-  entityType    String      // CUSTOMER | DEAL
+entityType    String      // CUSTOMER | DEAL
   entityId      Int
-  syncStatus    String      @default("PENDING") // SYNCED | PENDING | FAILED
-  errorMessage  String?
+syncStatus    String      @default("PENDING") // SYNCED | PENDING | FAILED
+  errorMessage  String?     @db.Text
   syncedAt      DateTime?
   customerId    Int?
   customer      Customer?   @relation(fields: [customerId], references: [id])
@@ -290,7 +290,7 @@ model ExportJob {
   business    Business @relation(fields: [businessId], references: [id])
   requestedBy Int?
   requester   User?    @relation("ExportRequestedBy", fields: [requestedBy], references: [id])
-  filter      String?  // JSON filter status/tanggal/produk/sumber
+  filter      String?  @db.Text  // JSON filter status/tanggal/produk/sumber
   filePath    String?
   status      String   @default("PENDING") // PENDING | PROCESSING | DONE | FAILED
   createdAt   DateTime @default(now())
@@ -303,8 +303,8 @@ model Notification {
   business   Business @relation(fields: [businessId], references: [id])
   userId     Int?
   user       User?    @relation(fields: [userId], references: [id])
-  type       String   // NEW_CUSTOMER | NEW_DEAL | EXPORT_DONE | FORBIDDEN_DATA | FOLLOW_UP
-  message    String
+type       String   // NEW_CUSTOMER | NEW_DEAL | EXPORT_DONE | FORBIDDEN_DATA | FOLLOW_UP
+  message    String   @db.Text
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
@@ -315,9 +315,9 @@ model AuditLog {
   business   Business? @relation(fields: [businessId], references: [id])
   userId     Int?
   user       User?    @relation(fields: [userId], references: [id])
-  action     String
+action     String
   entity     String
   entityId   Int?
-  metadata   String?  // JSON string
+  metadata   String?  @db.Text // JSON string
   createdAt  DateTime @default(now())
 }

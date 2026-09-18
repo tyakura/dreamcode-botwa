@@ -10,7 +10,7 @@ export function SiteFooter() {
       <div className="container-x grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-4">
           <Logo dark />
-          <p className="max-w-xs text-sm leading-relaxed text-white/75">
+          <p className="max-w-xs text-sm leading-relaxed text-white font-medium">
             Ubah setiap chat WhatsApp menjadi data pelanggan, prospek, dan deal
             yang bisa ditindaklanjuti — otomatis, 24 jam.
           </p>
@@ -18,7 +18,7 @@ export function SiteFooter() {
 
         {Object.entries(footerNav).map(([group, items]) => (
           <div key={group}>
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-accent/90">
+            <h3 className="mb-4 text-sm font-extrabold uppercase tracking-wider text-accent">
               {group}
             </h3>
             <ul className="flex flex-col gap-2.5">
@@ -26,7 +26,7 @@ export function SiteFooter() {
                 <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="text-sm text-white/85 transition-colors hover:text-accent"
+                    className="text-sm font-medium text-white hover:text-accent transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -39,10 +39,10 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10">
         <div className="container-x flex flex-col items-center justify-between gap-3 py-6 sm:flex-row">
-          <p className="text-xs text-white/70">
+          <p className="text-xs font-medium text-white">
             © {year} WhatsApp Business Agent. Semua hak cipta dilindungi.
           </p>
-          <p className="text-xs text-white/70">
+          <p className="text-xs font-medium text-white">
             24 jam · AI Customer Service · Mini CRM
           </p>
         </div>

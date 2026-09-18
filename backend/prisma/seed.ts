@@ -60,6 +60,26 @@ async function main() {
   });
   console.log("  User Staff CS: staff@dreamcode.com / admin123");
 
+  const teamAccounts: Array<{ name: string; email: string; role: string }> = [
+    { name: "Attaya Arkarna", email: "attayaarkarna12@gmail.com", role: "SUPER_ADMIN" },
+    { name: "Adilahsa", email: "adilahsa2@gmail.com", role: "SUPER_ADMIN" },
+    { name: "Abelajar", email: "abelajar486@gmail.com", role: "SUPER_ADMIN" },
+  ];
+  for (const acc of teamAccounts) {
+    await prisma.user.upsert({
+      where: { email: acc.email },
+      update: { roleId: roles[acc.role].id },
+      create: {
+        name: acc.name,
+        email: acc.email,
+        passwordHash,
+        roleId: roles[acc.role].id,
+        status: "ACTIVE",
+      },
+    });
+    console.log(`  User Team: ${acc.email} (${acc.role}) / admin123`);
+  }
+
   // Sample business
   const business = await prisma.business.upsert({
     where: { id: 1 },
@@ -203,6 +223,9 @@ async function main() {
   console.log("  admin@dreamcode.com (SUPER_ADMIN)");
   console.log("  owner@dreamcode.com  (BUSINESS_OWNER)");
   console.log("  staff@dreamcode.com  (STAFF_CS)");
+  console.log("  attayaarkarna12@gmail.com (SUPER_ADMIN)");
+  console.log("  adilahsa2@gmail.com       (SUPER_ADMIN)");
+  console.log("  abelajar486@gmail.com     (SUPER_ADMIN)");
   console.log("  Password semua: admin123");
 }
 

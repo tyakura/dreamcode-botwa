@@ -126,11 +126,11 @@ export default function FeaturesPage() {
             <Badge tone="accent" className="bg-accent/15 text-accent">
               Fitur Lengkap
             </Badge>
-            <h1 className="mt-4 text-3xl font-extrabold sm:text-5xl">
+            <h1 className="mt-4 text-3xl text-white font-extrabold sm:text-5xl">
               Satu platform untuk seluruh{" "}
               <span className="text-accent">perjalanan pelanggan</span>
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
+            <p className="mx-auto mt-4 max-w-xl text-lg font-medium text-white">
               Dari pesan WhatsApp pertama hingga deal terkonfirmasi — semuanya
               terotomasi dan terdata dalam satu dasbor.
             </p>
@@ -206,13 +206,13 @@ export default function FeaturesPage() {
 
         <section className="bg-primary py-16 text-center text-white">
           <div className="container-x">
-            <h2 className="text-2xl font-extrabold sm:text-3xl">
+            <h2 className="text-2xl text-white font-extrabold sm:text-3xl">
               Semua fitur ini bisa dipakai mulai hari ini.
             </h2>
             <Button href="/register" variant="primary" size="lg" className="mt-6">
               Daftar Gratis
             </Button>
-            <p className="mt-4 text-sm text-white/75">
+            <p className="mt-4 text-sm text-white/85">
               Lihat juga{" "}
               <Link href="/pricing" className="text-accent underline-offset-4 hover:underline">
                 halaman harga

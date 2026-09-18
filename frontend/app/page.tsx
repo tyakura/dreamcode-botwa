@@ -105,12 +105,12 @@ export default function Home() {
                 <Sparkles className="h-3.5 w-3.5" />
                 AI-powered WhatsApp CS
               </Badge>
-              <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-[3.4rem]">
+              <h1 className="text-4xl font-extrabold text-white leading-tight tracking-tight sm:text-5xl lg:text-[3.4rem]">
                 Setiap chat pelanggan jadi{" "}
                 <span className="text-accent">peluang bisnis</span>, bukan cuma
                 percakapan.
               </h1>
-              <p className="max-w-lg text-lg leading-relaxed text-white/75">
+              <p className="max-w-lg text-lg leading-relaxed text-white font-medium">
                 AI Agent menjawab pelanggan 24 jam, mengubah percakapan WhatsApp
                 menjadi data pelanggan terstruktur — dipantau dari pipeline
                 prospek hingga deal, difollow-up otomatis, dan siap
@@ -125,7 +125,7 @@ export default function Home() {
                   href="/features"
                   variant="outline"
                   size="lg"
-                  className="border-white/25 text-white hover:border-white hover:bg-white/10 hover:text-white"
+                  className="border-white/50 text-white hover:border-white hover:bg-white/10 hover:text-white font-semibold"
                 >
                   Lihat Demo
                 </Button>
@@ -137,7 +137,7 @@ export default function Home() {
                   ["100%", "Chat terdata"],
                 ].map(([value, label]) => (
                   <div key={label}>
-                    <dt className="order-2 mt-1 block text-xs text-white/75">
+                    <dt className="order-2 mt-1 block text-xs font-semibold text-white">
                       {label}
                     </dt>
                     <dd className="text-2xl font-extrabold text-accent">
@@ -150,38 +150,38 @@ export default function Home() {
 
             {/* Chat mock */}
             <div className="relative mx-auto w-full max-w-md">
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+              <div className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur">
                 <div className="mb-3 flex items-center gap-3 border-b border-white/10 pb-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20 text-accent">
                     <Bot className="h-5 w-5" />
                   </span>
                   <div>
                     <p className="text-sm font-bold text-white">AI Agent Bisnis</p>
-                    <p className="flex items-center gap-1.5 text-xs text-accent">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-accent">
                       <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                       Online — membalas otomatis
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2.5 text-sm">
-                  <div className="max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-white/10 px-4 py-2.5 text-white/85">
+                  <div className="max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-white/20 px-4 py-2.5 font-medium text-white">
                     Halo, saya mau tanya soal paket produk Anda
                   </div>
-                  <div className="max-w-[90%] self-end rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 text-primary">
+                  <div className="max-w-[90%] self-end rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 font-semibold text-primary">
                     Hai! Tentu. Boleh tahu kebutuhan Anda seperti apa? Saya bisa
                     bantu pilihkan paket yang paling sesuai. 😊
                   </div>
-                  <div className="max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-white/10 px-4 py-2.5 text-white/85">
+                  <div className="max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-white/20 px-4 py-2.5 font-medium text-white">
                     Saya cari untuk bisnis laundry kecil, kira-kira ada paket
                     mulai dari mana ya?
                   </div>
-                  <div className="max-w-[70%] self-end rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 text-primary">
+                  <div className="max-w-[70%] self-end rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 font-semibold text-primary">
                     Kami punya paket Starter mulai Rp150rb/bulan. Mau saya
                     kirimkan pricelist lengkapnya?
                   </div>
                 </div>
-                <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-white/75">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/15 px-3 py-2 text-xs font-medium text-white">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-accent shrink-0" />
                   AI mengekstrak data: nama, kebutuhan, produk diminati →
                   status prospek diperbarui
                 </div>
@@ -258,7 +258,7 @@ export default function Home() {
               <Badge tone="accent" className="bg-accent/15 text-accent">
                 Cara Kerja
               </Badge>
-              <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">
+              <h2 className="mt-4 text-white text-3xl font-extrabold sm:text-4xl">
                 Dari chat mentah menuju deal dalam 4 langkah
               </h2>
             </div>
@@ -266,14 +266,14 @@ export default function Home() {
               {flow.map(({ icon: Icon, step, title, desc }) => (
                 <div
                   key={step}
-                  className="relative rounded-2xl border border-white/10 bg-white/5 p-6"
+                  className="relative rounded-2xl border border-white/15 bg-white/10 p-6"
                 >
-                  <span className="text-xs font-bold uppercase tracking-widest text-accent">
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-accent">
                     Langkah {step}
                   </span>
                   <Icon className="mt-3 h-7 w-7 text-accent" />
-                  <h3 className="mt-3 text-lg font-bold">{title}</h3>
-                  <p className="mt-2 text-sm text-white/80">{desc}</p>
+                  <h3 className="mt-3 text-lg font-bold text-white">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white">{desc}</p>
                 </div>
               ))}
             </div>
@@ -293,11 +293,11 @@ export default function Home() {
               <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
               <div className="relative mx-auto max-w-2xl">
-                <h2 className="text-3xl font-extrabold sm:text-4xl">
+                <h2 className="text-3xl text-white font-extrabold sm:text-4xl">
                   Siap mengubah chat jadi{" "}
                   <span className="text-accent">pendapatan</span>?
                 </h2>
-                <p className="mt-4 text-lg text-white/80">
+                <p className="mt-4 text-lg font-semibold leading-relaxed text-white">
                   Daftar dalam 2 menit, hubungkan WhatsApp, dan biarkan AI mulai
                   bekerja untuk bisnis Anda.
                 </p>
@@ -309,7 +309,7 @@ export default function Home() {
                     href="/pricing"
                     variant="outline"
                     size="lg"
-                    className="border-white/25 text-white hover:border-white hover:bg-white/10 hover:text-white"
+                    className="border-white/50 text-white hover:border-white hover:bg-white/10 hover:text-white font-semibold"
                   >
                     Lihat Harga
                   </Button>

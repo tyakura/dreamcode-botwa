@@ -13,12 +13,12 @@ export function Badge({
   className?: string;
 }) {
   const tones: Record<BadgeTone, string> = {
-    neutral: "bg-cream text-ink border-line",
-    accent: "bg-accent/20 text-primary border-accent/40",
-    success: "bg-success/10 text-success border-success/30",
-    warning: "bg-warning/10 text-warning border-warning/40",
-    danger: "bg-danger/10 text-danger border-danger/30",
-    dark: "bg-primary text-white border-primary",
+    neutral: "bg-cream-dark text-ink border-line",
+    accent: "bg-accent/25 text-primary border-accent/50 font-bold",
+    success: "bg-emerald-100 text-emerald-950 border-emerald-300 font-semibold",
+    warning: "bg-amber-100 text-amber-950 border-amber-300 font-semibold",
+    danger: "bg-rose-100 text-rose-950 border-rose-300 font-semibold",
+    dark: "bg-primary text-white border-primary font-medium",
   };
 
   return (

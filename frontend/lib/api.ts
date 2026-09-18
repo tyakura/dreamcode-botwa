@@ -17,10 +17,13 @@ export interface AuthResponse {
   };
 }
 
+export type AuthUser = AuthResponse["user"];
+
 export interface RegisterPayload {
   name: string;
   email: string;
   password: string;
+  businessName: string;
 }
 
 export interface LoginPayload {
