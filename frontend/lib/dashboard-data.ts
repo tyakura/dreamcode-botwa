@@ -3,6 +3,8 @@
 // Belum terhubung database/API — siap digantikan saat integrasi.
 // ============================================================
 
+import { formatIDR } from "./format";
+
 export type CustomerStatus =
   | "NEW"
   | "CONTACTED"
@@ -135,18 +137,23 @@ export type CustomerRecord = {
   source: "WHATSAPP" | "EMAIL" | "MANUAL" | "WEB";
   isSelected: boolean;
   lastContactAt: string;
+  address?: string;
+  city?: string;
+  notes?: string;
+  tags?: string[];
+  createdAt?: string;
 };
 
 export const customers: CustomerRecord[] = [
-  { id: 1, name: "Andi Saputra", whatsapp: "6281234567890", productInterest: "Sepatu Sport", needs: "Cari ukuran 42, warna hitam", status: "NEW", source: "WHATSAPP", isSelected: true, lastContactAt: "5 mnt lalu" },
-  { id: 2, name: "Budi Santoso", whatsapp: "6289876543210", email: "budi@mail.com", company: "PT Karya Mandiri", productInterest: "Tas Kulit", needs: "Cocok untuk hadiah karyawan", status: "INTERESTED", source: "WHATSAPP", isSelected: false, lastContactAt: "32 mnt lalu" },
-  { id: 3, name: "Citra Lestari", whatsapp: "6285550001111", email: "citra@majujaya.com", company: "PT Maju Jaya", productInterest: "Grosir Sepatu", needs: "Butuh 50 pasang untuk reseller", status: "QUALIFIED", source: "EMAIL", isSelected: true, lastContactAt: "3 jam lalu" },
-  { id: 4, name: "Dedi Kurniawan", whatsapp: "6281112223333", email: "dedi@mail.com", productInterest: "Tas Kulit", needs: "Pembelian ulang", status: "DEAL", source: "WHATSAPP", isSelected: false, lastContactAt: "Kemarin" },
-  { id: 5, name: "Eka Pratiwi", whatsapp: "6287778889999", email: "eka@gmail.com", productInterest: "Kopi Luwak", needs: "Tanya harga grosir", status: "CONTACTED", source: "WHATSAPP", isSelected: false, lastContactAt: "2 hari lalu" },
-  { id: 6, name: "Fajar Ramadhan", whatsapp: "6283334445555", email: "fajar@umkm.co", company: "UMKM Sejahtera", productInterest: "Packaging Custom", needs: "Kebutuhan 100 pcs kemasan premium", status: "NEGOTIATION", source: "WEB", isSelected: true, lastContactAt: "1 hari lalu" },
-  { id: 7, name: "Gita Permata", whatsapp: "6286667778888", productInterest: "Baju Seragam", needs: "Seragam tim 12 orang", status: "INTERESTED", source: "WHATSAPP", isSelected: false, lastContactAt: "4 hari lalu" },
-  { id: 8, name: "Hendra Wijaya", whatsapp: "6289990001111", email: "hendra@tech.id", productInterest: "Gadget Aksesori", needs: "Menunggu budget approval", status: "QUALIFIED", source: "MANUAL", isSelected: false, lastContactAt: "Seminggu lalu" },
-  { id: 9, name: "Indra Lesmana", whatsapp: "6282223334444", productInterest: "Kopi Luwak", needs: "Memilih kompetitor", status: "LOST", source: "WHATSAPP", isSelected: false, lastContactAt: "2 minggu lalu" },
+  { id: 1, name: "Andi Saputra", whatsapp: "6281234567890", email: "andi@mail.com", productInterest: "Sepatu Sport", needs: "Cari ukuran 42, warna hitam", status: "NEW", source: "WHATSAPP", isSelected: true, lastContactAt: "5 mnt lalu", address: "Jl. Melati No. 12", city: "Jakarta Selatan", notes: "Menunggu info stok ukuran 42 warna hitam. Calon pembeli retail.", tags: ["Retail", "Sepatu Sport"], createdAt: "5 hari lalu" },
+  { id: 2, name: "Budi Santoso", whatsapp: "6289876543210", email: "budi@mail.com", company: "PT Karya Mandiri", productInterest: "Tas Kulit", needs: "Cocok untuk hadiah karyawan", status: "INTERESTED", source: "WHATSAPP", isSelected: false, lastContactAt: "32 mnt lalu", address: "Jl. Sudirman Kav. 21", city: "Jakarta Pusat", notes: "Prospek korporat untuk hadiah karyawan tahunan.", tags: ["Korporat", "Tas Kulit"], createdAt: "2 minggu lalu" },
+  { id: 3, name: "Citra Lestari", whatsapp: "6285550001111", email: "citra@majujaya.com", company: "PT Maju Jaya", productInterest: "Grosir Sepatu", needs: "Butuh 50 pasang untuk reseller", status: "QUALIFIED", source: "EMAIL", isSelected: true, lastContactAt: "3 jam lalu", address: "Ruko Sentra Bisnis Blok A2", city: "Bandung", notes: "Reseller potensial, minta harga grosir 50 pasang. Sudah dikirim penawaran via email.", tags: ["Reseller", "Grosir"], createdAt: "1 bulan lalu" },
+  { id: 4, name: "Dedi Kurniawan", whatsapp: "6281112223333", email: "dedi@mail.com", productInterest: "Tas Kulit", needs: "Pembelian ulang", status: "DEAL", source: "WHATSAPP", isSelected: false, lastContactAt: "Kemarin", address: "Perum Griya Asri No. 4", city: "Bekasi", notes: "Pembelian ulang, pelanggan setia. Pembayaran lunas.", tags: ["Loyal", "Tas Kulit"], createdAt: "3 bulan lalu" },
+  { id: 5, name: "Eka Pratiwi", whatsapp: "6287778889999", email: "eka@gmail.com", productInterest: "Kopi Luwak", needs: "Tanya harga grosir", status: "CONTACTED", source: "WHATSAPP", isSelected: false, lastContactAt: "2 hari lalu", address: "Jl. Anggrek No. 88", city: "Depok", notes: "Menanyakan harga grosir kopi luwak. Sudah kontak via WhatsApp.", tags: ["Retail", "Kopi"], createdAt: "2 bulan lalu" },
+  { id: 6, name: "Fajar Ramadhan", whatsapp: "6283334445555", email: "fajar@umkm.co", company: "UMKM Sejahtera", productInterest: "Packaging Custom", needs: "Kebutuhan 100 pcs kemasan premium", status: "NEGOTIATION", source: "WEB", isSelected: true, lastContactAt: "1 hari lalu", address: "Jl. Industri Raya No. 45", city: "Tangerang", notes: "Kebutuhan 100 pcs kemasan premium untuk brand sendiri.", tags: ["UMKM", "Packaging"], createdAt: "1 bulan lalu" },
+  { id: 7, name: "Gita Permata", whatsapp: "6286667778888", productInterest: "Baju Seragam", needs: "Seragam tim 12 orang", status: "INTERESTED", source: "WHATSAPP", isSelected: false, lastContactAt: "4 hari lalu", address: "Jl. Cempaka Putih No. 14", city: "Jakarta Utara", notes: "Butuh seragam untuk tim 12 orang.", tags: ["Kantor", "Seragam"], createdAt: "3 minggu lalu" },
+  { id: 8, name: "Hendra Wijaya", whatsapp: "6289990001111", email: "hendra@tech.id", productInterest: "Gadget Aksesori", needs: "Menunggu budget approval", status: "QUALIFIED", source: "MANUAL", isSelected: false, lastContactAt: "Seminggu lalu", address: "COMPASS Tower Lt. 18", city: "Jakarta Selatan", notes: "Budget approval masih diproses finance.", tags: ["Korporat", "Gadget"], createdAt: "2 bulan lalu" },
+  { id: 9, name: "Indra Lesmana", whatsapp: "6282223334444", productInterest: "Kopi Luwak", needs: "Memilih kompetitor", status: "LOST", source: "WHATSAPP", isSelected: false, lastContactAt: "2 minggu lalu", address: "Griya Indah No. 5", city: "Bogor", notes: "Berpindah ke kompetitor. Diberhentikan follow-up.", tags: ["LOST"], createdAt: "4 bulan lalu" },
 ];
 
 export const customerStatusOptions: CustomerStatus[] = [
@@ -577,15 +584,22 @@ export type AdminCustomerRecord = {
   status: CustomerStatus;
   source: string;
   updatedAt: string;
+  email?: string;
+  company?: string;
+  address?: string;
+  city?: string;
+  notes?: string;
+  tags?: string[];
+  createdAt?: string;
 };
 
 export const adminCustomers: AdminCustomerRecord[] = [
-  { id: 1, business: "DreamShop", name: "Andi Saputra", whatsapp: "6281234567890", product: "Sepatu Sport", status: "NEW", source: "WHATSAPP", updatedAt: "5 mnt lalu" },
-  { id: 2, business: "Kopi Nusantara", name: "Rara Kirana", whatsapp: "6284445556666", product: "Kopi Robusta", status: "INTERESTED", source: "WHATSAPP", updatedAt: "20 mnt lalu" },
-  { id: 3, business: "Tokos Serba Ada", name: "Dimas Anggoro", whatsapp: "6287778889999", product: "Elektronik", status: "QUALIFIED", source: "WEB", updatedAt: "1 jam lalu" },
-  { id: 4, business: "DreamShop", name: "Citra Lestari", whatsapp: "6285550001111", product: "Grosir Sepatu", status: "QUALIFIED", source: "EMAIL", updatedAt: "3 jam lalu" },
-  { id: 5, business: "Laundry Express", name: "Nina Sari", whatsapp: "6281231231234", product: "Laundry Kilat", status: "DEAL", source: "WHATSAPP", updatedAt: "Kemarin" },
-  { id: 6, business: "Kopi Nusantara", name: "Fajar Ramadhan", whatsapp: "6283334445555", product: "Packaging Custom", status: "NEGOTIATION", source: "WEB", updatedAt: "1 hari lalu" },
+  { id: 1, business: "DreamShop", name: "Andi Saputra", whatsapp: "6281234567890", product: "Sepatu Sport", status: "NEW", source: "WHATSAPP", updatedAt: "5 mnt lalu", email: "andi@mail.com", address: "Jl. Melati No. 12", city: "Jakarta Selatan", notes: "Menunggu info stok ukuran 42 warna hitam. Calon pembeli retail.", tags: ["Retail", "Sepatu Sport"], createdAt: "5 hari lalu" },
+  { id: 2, business: "Kopi Nusantara", name: "Rara Kirana", whatsapp: "6284445556666", product: "Kopi Robusta", status: "INTERESTED", source: "WHATSAPP", updatedAt: "20 mnt lalu", email: "rara@kedaikopi.co", company: "Kedai Kopi Rara", address: "Jl. Gatot Subroto No. 7", city: "Yogyakarta", notes: "Minta sampel robusta premium untuk kedai.", tags: ["Kedai", "Kopi"], createdAt: "1 minggu lalu" },
+  { id: 3, business: "Tokos Serba Ada", name: "Dimas Anggoro", whatsapp: "6287778889999", product: "Elektronik", status: "QUALIFIED", source: "WEB", updatedAt: "1 jam lalu", email: "dimas@anggoro-elektronik.com", company: "PT Anggoro Elektronik", address: "Jl. Thamrin No. 9", city: "Jakarta Pusat", notes: "Sedang survey harga paket elektronik A.", tags: ["Korporat", "Elektronik"], createdAt: "3 minggu lalu" },
+  { id: 4, business: "DreamShop", name: "Citra Lestari", whatsapp: "6285550001111", product: "Grosir Sepatu", status: "QUALIFIED", source: "EMAIL", updatedAt: "3 jam lalu", email: "citra@majujaya.com", company: "PT Maju Jaya", address: "Ruko Sentra Bisnis Blok A2", city: "Bandung", notes: "Reseller potensial, minta harga grosir 50 pasang.", tags: ["Reseller", "Grosir"], createdAt: "1 bulan lalu" },
+  { id: 5, business: "Laundry Express", name: "Nina Sari", whatsapp: "6281231231234", product: "Laundry Kilat", status: "DEAL", source: "WHATSAPP", updatedAt: "Kemarin", email: "nina@mail.com", address: "Perum Graha Indah 21", city: "Bekasi", notes: "Langganan laundry kilat bulanan.", tags: ["Loyal", "Laundry"], createdAt: "2 bulan lalu" },
+  { id: 6, business: "Kopi Nusantara", name: "Fajar Ramadhan", whatsapp: "6283334445555", product: "Packaging Custom", status: "NEGOTIATION", source: "WEB", updatedAt: "1 hari lalu", email: "fajar@umkm.co", company: "UMKM Sejahtera", address: "Jl. Industri Raya No. 45", city: "Tangerang", notes: "Butuh custom packaging kopi premium.", tags: ["UMKM", "Packaging"], createdAt: "1 bulan lalu" },
 ];
 
 export type AdminDealRecord = {
@@ -671,3 +685,147 @@ export const platformSettings = {
   maintenanceMode: false,
   defaultTimezone: "Asia/Jakarta",
 };
+
+// ============================================================
+// Customer Detail (lookups & activity) — dipakai halaman detail
+// ============================================================
+export type CustomerActivityRecord = {
+  id: number;
+  type: "STATUS_CHANGE" | "CONVERSATION" | "FOLLOW_UP" | "DEAL";
+  title: string;
+  detail?: string;
+  time: string;
+};
+
+export function getCustomerById(id: number): CustomerRecord | undefined {
+  return customers.find((c) => c.id === id);
+}
+
+export function getCustomerConversations(customerName: string): ConversationRecord[] {
+  return conversations.filter((c) => c.customer === customerName);
+}
+
+export function getCustomerDeals(customerName: string): DealRecord[] {
+  return deals.filter((d) => d.customer === customerName);
+}
+
+export function getCustomerFollowUps(customerName: string): FollowUpRecord[] {
+  return followUps.filter((f) => f.customer === customerName);
+}
+
+function buildCustomerActivities(customer: CustomerRecord): CustomerActivityRecord[] {
+  const list: CustomerActivityRecord[] = [];
+  let seq = 0;
+  const push = (item: Omit<CustomerActivityRecord, "id">) => {
+    seq += 1;
+    list.push({ id: seq, ...item });
+  };
+
+  push({
+    type: "CONVERSATION",
+    title: `Percakapan via ${customer.source}`,
+    detail: customer.needs ?? `Menanyakan ${customer.productInterest}`,
+    time: customer.lastContactAt,
+  });
+  push({
+    type: "STATUS_CHANGE",
+    title: `Status diperbarui menjadi ${customer.status}`,
+    time: customer.lastContactAt,
+  });
+
+  for (const f of getCustomerFollowUps(customer.name)) {
+    push({
+      type: "FOLLOW_UP",
+      title: `Follow-up ${f.channel === "WHATSAPP" ? "WhatsApp" : "email"} (${f.type === "AUTOMATIC" ? "otomatis" : "manual"})`,
+      detail: f.message,
+      time: f.scheduledAt,
+    });
+  }
+
+  for (const d of getCustomerDeals(customer.name)) {
+    push({
+      type: "DEAL",
+      title: `Deal terdeteksi: ${d.product}`,
+      detail: `${formatIDR(d.amount)} · ${d.status}`,
+      time: d.dealDate,
+    });
+  }
+
+  return list;
+}
+
+export const customerActivities: Record<number, CustomerActivityRecord[]> = customers.reduce(
+  (acc, c) => {
+    acc[c.id] = buildCustomerActivities(c);
+    return acc;
+  },
+  {} as Record<number, CustomerActivityRecord[]>,
+);
+
+export function getCustomerActivities(customerId: number): CustomerActivityRecord[] {
+  return customerActivities[customerId] ?? [];
+}
+
+export function getAdminCustomerById(id: number): AdminCustomerRecord | undefined {
+  return adminCustomers.find((c) => c.id === id);
+}
+
+export function getAdminCustomerDeals(customerName: string): AdminDealRecord[] {
+  return adminDeals.filter((d) => d.customer === customerName);
+}
+
+export function getAdminCustomerFollowUps(customerName: string): AdminFollowUpRecord[] {
+  return adminFollowUps.filter((f) => f.customer === customerName);
+}
+
+function buildAdminActivities(customer: AdminCustomerRecord): CustomerActivityRecord[] {
+  const list: CustomerActivityRecord[] = [];
+  let seq = 0;
+  const push = (item: Omit<CustomerActivityRecord, "id">) => {
+    seq += 1;
+    list.push({ id: seq, ...item });
+  };
+
+  push({
+    type: "CONVERSATION",
+    title: `Percakapan via ${customer.source}`,
+    detail: `Menanyakan ${customer.product}`,
+    time: customer.updatedAt,
+  });
+  push({
+    type: "STATUS_CHANGE",
+    title: `Status diperbarui menjadi ${customer.status}`,
+    time: customer.updatedAt,
+  });
+
+  for (const f of getAdminCustomerFollowUps(customer.name)) {
+    push({
+      type: "FOLLOW_UP",
+      title: `Follow-up ${f.channel === "WHATSAPP" ? "WhatsApp" : "email"}`,
+      time: f.scheduledAt,
+    });
+  }
+
+  for (const d of getAdminCustomerDeals(customer.name)) {
+    push({
+      type: "DEAL",
+      title: `Deal terdeteksi: ${d.product}`,
+      detail: `${formatIDR(d.amount)} · ${d.status}`,
+      time: d.date,
+    });
+  }
+
+  return list;
+}
+
+export const adminCustomerActivities: Record<number, CustomerActivityRecord[]> = adminCustomers.reduce(
+  (acc, c) => {
+    acc[c.id] = buildAdminActivities(c);
+    return acc;
+  },
+  {} as Record<number, CustomerActivityRecord[]>,
+);
+
+export function getAdminCustomerActivities(customerId: number): CustomerActivityRecord[] {
+  return adminCustomerActivities[customerId] ?? [];
+}

@@ -1,4 +1,5 @@
 import { Search, Users } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardHeader } from "@/components/dashboard/card";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -50,7 +51,14 @@ export default function AdminCustomersPage() {
                 <Td>
                   <Badge tone="dark">{c.business}</Badge>
                 </Td>
-                <Td className="font-bold text-ink">{c.name}</Td>
+                <Td className="font-bold text-ink">
+                  <Link
+                    href={`/admin/customers/${c.id}`}
+                    className="transition-colors hover:text-accent-dark hover:underline"
+                  >
+                    {c.name}
+                  </Link>
+                </Td>
                 <Td className="font-mono text-xs text-muted">+{c.whatsapp}</Td>
                 <Td className="max-w-32 truncate text-muted">{c.product}</Td>
                 <Td>

@@ -1,4 +1,5 @@
 import { FileDown, Filter, Search, Star } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardBody, CardHeader } from "@/components/dashboard/card";
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -88,7 +89,12 @@ export default function UserCustomersPage() {
             {customers.map((c) => (
               <Tr key={c.id}>
                 <Td>
-                  <p className="font-bold text-ink">{c.name}</p>
+                  <Link
+                    href={`/dashboard/user/customers/${c.id}`}
+                    className="font-bold text-ink transition-colors hover:text-accent-dark hover:underline"
+                  >
+                    {c.name}
+                  </Link>
                   <p className="text-xs text-muted">+{c.whatsapp}</p>
                 </Td>
                 <Td className="text-muted">{c.email ?? "—"}</Td>
