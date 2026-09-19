@@ -4,8 +4,10 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
-  useSyncExternalStore,
+  useRef,
+  useState,
 } from "react";
 import {
   authApi,
@@ -24,38 +26,6 @@ interface AuthState {
   hydrated: boolean;
 }
 
-type AuthUpdate = Partial<Pick<AuthState, "user">> | AuthState;
-
-const listeners = new Set<() => void>();
-let cache: AuthState = { user: null, hydrated: false };
-
-function readAuth(): AuthState {
-  if (typeof window !== "undefined" && !cache.hydrated) {
-    cache = { user: getUser(), hydrated: true };
-  }
-  return cache;
-}
-
-function writeAuth(state: AuthUpdate) {
-  cache = { ...cache, ...state };
-  listeners.forEach((l) => l());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getSnapshot(): AuthState {
-  return readAuth();
-}
-
-function getServerSnapshot(): AuthState {
-  return { user: null, hydrated: false };
-}
-
 interface AuthContextValue {
   user: AuthUser | null;
   hydrated: boolean;
@@ -66,14 +36,36 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Baca localStorage sekali, di luar komponen, agar tersedia sebelum render pertama.
+// Ini aman karena file ini hanya di-bundle di client ("use client").
+function initAuth(): AuthState {
+  if (typeof window === "undefined") return { user: null, hydrated: false };
+  return { user: getUser(), hydrated: true };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const auth = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  // useState lazy initializer: hanya dipanggil sekali saat komponen pertama di-mount.
+  // Hasilnya: pada render pertama di client, hydrated sudah true — tidak ada spinner sama sekali.
+  const [auth, setAuth] = useState<AuthState>(initAuth);
+
+  // Pada SSR, komponen ini render dengan hydrated=false.
+  // Setelah mount di client, sync ke localStorage supaya server/client match.
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      // Kalau SSR (hydrated masih false setelah mount), baca localStorage sekarang.
+      if (!auth.hydrated) {
+        setAuth({ user: getUser(), hydrated: true });
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = useCallback(async (payload: LoginPayload) => {
     const res = await authApi.login(payload);
     setToken(res.token);
     setUser(res.user);
-    writeAuth({ user: res.user, hydrated: true });
+    setAuth({ user: res.user, hydrated: true });
     return res;
   }, []);
 
@@ -81,13 +73,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const res = await authApi.register(payload);
     setToken(res.token);
     setUser(res.user);
-    writeAuth({ user: res.user, hydrated: true });
+    setAuth({ user: res.user, hydrated: true });
     return res;
   }, []);
 
   const logout = useCallback(() => {
     clearStorage();
-    writeAuth({ user: null, hydrated: true });
+    setAuth({ user: null, hydrated: true });
   }, []);
 
   const value = useMemo(

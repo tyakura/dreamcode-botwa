@@ -102,7 +102,7 @@ export default function PricingPage() {
       <SiteHeader />
       <main className="flex-1">
         <section className="bg-primary py-16 text-white">
-          <div className="container-x mx-auto max-w-2xl text-center">
+          <div className="container-x mx-auto max-w-2xl text-white text-center">
             <Badge tone="accent" className="bg-accent/15 text-accent">
               Harga Sederhana
             </Badge>

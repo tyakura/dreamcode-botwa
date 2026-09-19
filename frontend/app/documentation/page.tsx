@@ -148,8 +148,8 @@ export default function DocumentationPage() {
       <SiteHeader />
       <main className="flex-1">
         <section className="bg-primary py-16 text-white">
-          <div className="container-x mx-auto max-w-3xl text-center">
-            <Badge tone="accent" className="bg-accent/15 text-accent">
+          <div className="container-x mx-auto max-w-3xl text-white text-center">
+            <Badge tone="accent" className="bg-accent/ text-white text-accent">
               Dokumentasi
             </Badge>
             <h1 className="mt-4 text-3xl text-white font-extrabold sm:text-5xl">
@@ -278,7 +278,7 @@ export default function DocumentationPage() {
         {/* DATA MODEL */}
         <section className="bg-white py-16">
           <div className="container-x">
-            <div className="mx-auto max-w-2xl text-center">
+            <div className="mx-auto max-w-2xl  text-center">
               <Badge tone="accent">
                 <Database className="h-3.5 w-3.5" />
                 Model Data

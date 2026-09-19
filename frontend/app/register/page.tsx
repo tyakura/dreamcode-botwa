@@ -2,20 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, MailCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { AuthShell, AuthAlternate } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Checkbox } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { homePathFor, RequireGuest } from "@/components/auth/guards";
-
-const steps = ["Buat Akun", "Verifikasi Email", "Workspace Siap"];
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
@@ -30,19 +26,20 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (
-      !form.name ||
-      !form.business ||
-      !form.email ||
-      !form.password
-    ) {
+
+    if (!form.name || !form.business || !form.email || !form.password) {
       setError("Semua kolom wajib diisi (kecuali WhatsApp).");
+      return;
+    }
+    if (form.password.length < 6) {
+      setError("Password minimal 6 karakter.");
       return;
     }
     if (!form.agree) {
       setError("Anda perlu menyetujui syarat & ketentuan untuk melanjutkan.");
       return;
     }
+
     setLoading(true);
     try {
       const res = await register({
@@ -51,14 +48,12 @@ export default function RegisterPage() {
         password: form.password,
         businessName: form.business,
       });
-      // BUSINESS_OWNER selalu ke /dashboard, admin ke /admin
-      const dest = homePathFor(res.user.role);
-      sessionStorage.setItem("register_dest", dest);
-      setStep(2);
+      // Langsung redirect — BUSINESS_OWNER → /dashboard/user, ADMIN/SUPER_ADMIN → /admin
+      // Pakai replace agar halaman register tidak bisa diakses kembali via tombol Back
+      router.replace(homePathFor(res.user.role));
     } catch (err: unknown) {
       const apiErr = err as { message?: string };
       setError(apiErr.message || "Gagal membuat akun. Silakan coba lagi.");
-    } finally {
       setLoading(false);
     }
   }
@@ -72,72 +67,13 @@ export default function RegisterPage() {
           <AuthAlternate label="Sudah punya akun? Masuk" href="/login" />
         }
       >
-      <ol className="mb-6 flex items-center gap-2">
-        {steps.map((label, i) => {
-          const n = i + 1;
-          const active = n === step;
-          const done = n < step;
-          return (
-            <li
-              key={label}
-              className="flex flex-1 flex-col items-center gap-1.5"
-            >
-              <span
-                className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors",
-                  done
-                    ? "bg-success text-white"
-                    : active
-                      ? "bg-accent text-primary"
-                      : "bg-cream text-muted",
-                )}
-              >
-                {done ? "✓" : n}
-              </span>
-              <span
-                className={cn(
-                  "text-center text-[11px] font-semibold leading-tight",
-                  active ? "text-primary" : "text-muted/75",
-                )}
-              >
-                {label}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-
-      {step === 2 ? (
-        <div className="flex flex-col items-center gap-3 py-4 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-success/10 text-success">
-            <MailCheck className="h-7 w-7" />
-          </span>
-          <h2 className="text-lg font-extrabold text-ink">Akun berhasil dibuat!</h2>
-          <p className="text-sm text-muted">
-            Selamat datang, <span className="font-semibold text-ink">{form.name}</span>!
-            Akun Anda sudah aktif. Silakan lanjut ke dashboard untuk mulai
-            mengelola bisnis Anda.
-          </p>
-          <Button
-            variant="dark"
-            size="md"
-            className="mt-2"
-            onClick={() => {
-              const dest = sessionStorage.getItem("register_dest") || "/dashboard/user";
-              sessionStorage.removeItem("register_dest");
-              router.push(dest);
-            }}
-          >
-            Lanjut ke Dashboard
-          </Button>
-        </div>
-      ) : (
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {error ? (
             <p className="rounded-lg border border-danger/30 bg-danger/10 px-3.5 py-2.5 text-sm font-medium text-danger">
               {error}
             </p>
           ) : null}
+
           <Input
             name="name"
             label="Nama"
@@ -190,7 +126,13 @@ export default function RegisterPage() {
             checked={form.agree}
             onChange={(e) => setForm({ ...form, agree: e.target.checked })}
           />
-          <Button type="submit" variant="primary" size="lg" className="mt-1 w-full" disabled={loading}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="mt-1 w-full"
+            disabled={loading}
+          >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -201,8 +143,7 @@ export default function RegisterPage() {
             )}
           </Button>
         </form>
-      )}
       </AuthShell>
-      </RequireGuest>
+    </RequireGuest>
   );
 }

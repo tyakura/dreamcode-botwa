@@ -122,8 +122,8 @@ export default function FeaturesPage() {
       <SiteHeader />
       <main className="flex-1">
         <section className="bg-primary py-16 text-white">
-          <div className="container-x mx-auto max-w-3xl text-center">
-            <Badge tone="accent" className="bg-accent/15 text-accent">
+          <div className="container-x mx-auto max-w-3xl text-white text-center">
+            <Badge tone="accent" className="bg-accent/15 text-white text-accent">
               Fitur Lengkap
             </Badge>
             <h1 className="mt-4 text-3xl text-white font-extrabold sm:text-5xl">

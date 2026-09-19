@@ -30,10 +30,13 @@ export default function LoginPage() {
         email: form.email,
         password: form.password,
       });
-      // SUPER_ADMIN / ADMIN → /admin, semua lain (BUSINESS_OWNER, STAFF_CS) → /dashboard
-      router.push(homePathFor(res.user.role));
+      const dest = homePathFor(res.user.role);
+      console.log("[LOGIN] berhasil, role:", res.user.role, "→ redirect ke:", dest);
+      router.replace(dest);
+      console.log("[LOGIN] router.replace dipanggil");
     } catch (err: unknown) {
       const apiErr = err as { message?: string };
+      console.error("[LOGIN] error:", apiErr);
       setError(apiErr.message || "Gagal login. Periksa email dan password Anda.");
     } finally {
       setLoading(false);

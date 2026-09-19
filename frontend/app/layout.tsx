@@ -6,6 +6,8 @@ import "./globals.css";
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
   subsets: ["latin"],
+  display: "swap",   // halaman langsung render pakai fallback font, bukan nunggu font load
+  preload: true,     // Next.js inject <link rel="preload"> di <head> agar font fetch lebih awal
 });
 
 export const metadata: Metadata = {

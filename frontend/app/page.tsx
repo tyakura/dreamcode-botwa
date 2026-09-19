@@ -101,7 +101,7 @@ export default function Home() {
           <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-accent/5 blur-3xl" />
           <div className="container-x relative grid items-center gap-12 py-20 lg:grid-cols-2 lg:py-28">
             <div className="flex flex-col items-start gap-6">
-              <Badge tone="accent" className="bg-accent/15 text-accent">
+              <Badge tone="accent" className="bg-accent/15 text-white text-accent">
                 <Sparkles className="h-3.5 w-3.5" />
                 AI-powered WhatsApp CS
               </Badge>

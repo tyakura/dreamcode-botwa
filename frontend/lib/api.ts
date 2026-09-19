@@ -131,3 +131,33 @@ export const authApi = {
     });
   },
 };
+
+// ─── User types ────────────────────────────────────────────────────────────────
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  status: string;
+  roleId: number;
+  createdAt: string;
+  updatedAt: string;
+  role: { id: number; name: string };
+}
+
+// ─── Users API ─────────────────────────────────────────────────────────────────
+
+export const usersApi = {
+  /** GET /api/users — hanya bisa diakses ADMIN / SUPER_ADMIN */
+  list() {
+    return api<AdminUser[]>("/api/users");
+  },
+
+  /** PATCH /api/users/:id — update status (ACTIVE / SUSPENDED) */
+  update(id: number, body: { status?: string; name?: string; email?: string; roleId?: number }) {
+    return api<AdminUser>(`/api/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+};

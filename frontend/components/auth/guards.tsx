@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
@@ -25,6 +25,7 @@ function AuthLoader() {
   );
 }
 
+// ─── RequireAuth ──────────────────────────────────────────────────────────────
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, hydrated } = useAuth();
   const router = useRouter();
@@ -37,6 +38,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// ─── RequireAdmin ─────────────────────────────────────────────────────────────
 export function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { user, hydrated } = useAuth();
   const router = useRouter();
@@ -51,14 +53,39 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// ─── RequireGuest ─────────────────────────────────────────────────────────────
+// Untuk halaman login/register.
+// Logika: kalau user sudah login saat halaman pertama kali dibuka → redirect.
+// Kalau tidak, tampilkan form langsung. TIDAK pernah mem-block form setelah
+// login/register berhasil — biar page component sendiri yang navigate.
 export function RequireGuest({ children }: { children: React.ReactNode }) {
   const { user, hydrated } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (hydrated && user) router.replace(homePathFor(user.role));
-  }, [hydrated, user, router]);
+  // Snapshot state login saat pertama kali render di client.
+  // useState dengan lazy init: hanya dipanggil sekali.
+  const [initiallyLoggedIn] = useState(() => {
+    // Saat SSR ini selalu false (tidak ada window)
+    if (typeof window === "undefined") return false;
+    // Di client: cek apakah user sudah login SEBELUM halaman ini dibuka
+    // (baca langsung dari localStorage, bukan dari context yang bisa berubah)
+    try {
+      return !!localStorage.getItem("user");
+    } catch {
+      return false;
+    }
+  });
 
-  if (!hydrated) return <AuthLoader />;
+  useEffect(() => {
+    // Hanya redirect kalau memang sudah login dari awal
+    if (hydrated && user && initiallyLoggedIn) {
+      router.replace(homePathFor(user.role));
+    }
+  }, [hydrated, user, router, initiallyLoggedIn]);
+
+  // Tampilkan loader hanya kalau sudah login sejak awal (sedang menunggu redirect)
+  if (initiallyLoggedIn && hydrated && user) return <AuthLoader />;
+
+  // Dalam semua kondisi lain: tampilkan form langsung
   return <>{children}</>;
 }
